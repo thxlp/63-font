@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autumn Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="login-style.css">
+</head>
+<body>
+
+    <div class="background-scene">
+        <div class="tree-blob big-tree"></div>
+        <div class="tree-blob small-tree"></div>
+        <div class="bird"></div>
+    </div>
+
+    <div class="login-container">
+        <div class="login-card">
+            
+            <div class="header-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="#8D5E5E" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" opacity="0.1"/>
+                    <path d="M18.5 7.5C16 8 14 10.5 13 12.5C12.5 10 11 8 8 7.5" stroke="#7B2E2E" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M13 12.5L11 16" stroke="#7B2E2E" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <h1>SIGN IN</h1>
+            </div>
+
+            <form id="loginForm">
+                <div id="message" class="message" style="display: none;"></div>
+                
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+
+                <button type="submit" class="btn-login" id="submitBtn">Login</button>
+            </form>
+
+            <div class="footer-links">
+                <a href="#" class="forgot">Forgot password</a>
+                <a href="register.html" class="signup">Sign Up</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3002/api/auth/signin';
+
+        // ฟังก์ชันแสดงข้อความ
+        function showMessage(message, type = 'error') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.style.display = 'block';
+            messageDiv.className = `message ${type}`;
+            
+            if (type === 'success') {
+                messageDiv.style.backgroundColor = '#d4edda';
+                messageDiv.style.color = '#155724';
+                messageDiv.style.borderColor = '#c3e6cb';
+            } else {
+                messageDiv.style.backgroundColor = '#f8d7da';
+                messageDiv.style.color = '#721c24';
+                messageDiv.style.borderColor = '#f5c6cb';
+            }
+        }
+
+        function hideMessage() {
+            document.getElementById('message').style.display = 'none';
+        }
+
+        // จัดการ form submission
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideMessage();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Validation
+            if (!username || !password) {
+                showMessage('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+
+            // Disable button และเปลี่ยนข้อความ
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'กำลังเข้าสู่ระบบ...';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: username, // ✅ Backend ต้องการ 'email' field
+                        username: username, // ส่งทั้งสองแบบเพื่อความปลอดภัย
+                        password: password
+                    })
+                });
+
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    // ถ้า response ไม่ใช่ JSON
+                    data = { message: response.statusText || 'เกิดข้อผิดพลาด' };
+                }
+
+                if (response.ok) {
+                    // Login สำเร็จ
+                    console.log('=== Login สำเร็จ ===');
+                    console.log('Response data:', data);
+                    console.log('Response keys:', Object.keys(data));
+                    
+                    showMessage('เข้าสู่ระบบสำเร็จ! กำลังไปที่หน้าหลัก...', 'success');
+                    
+                    // ✅ บันทึก token จาก data.session.access_token (ตาม backend guide)
+                    let tokenToSave = null;
+                    if (data.session && data.session.access_token) {
+                        tokenToSave = data.session.access_token;
+                        console.log('✓ พบ token ใน data.session.access_token');
+                    } else if (data.token) {
+                        tokenToSave = data.token;
+                        console.log('✓ พบ token ใน data.token');
+                    } else if (data.accessToken) {
+                        tokenToSave = data.accessToken;
+                        console.log('✓ พบ token ใน data.accessToken');
+                    } else if (data.access_token) {
+                        tokenToSave = data.access_token;
+                        console.log('✓ พบ token ใน data.access_token');
+                    }
+                    
+                    if (tokenToSave) {
+                        localStorage.setItem('token', tokenToSave);
+                        console.log('✓ บันทึก token ลง localStorage:', tokenToSave.substring(0, 20) + '...');
+                    } else {
+                        console.warn('⚠ ไม่พบ token ใน response');
+                        console.warn('   Response structure:', data);
+                    }
+                    
+                    // บันทึกข้อมูลผู้ใช้ไว้ใน localStorage
+                    let userDataToSave = null;
+                    
+                    if (data.user) {
+                        userDataToSave = data.user;
+                        console.log('✓ พบข้อมูลใน data.user');
+                    } else if (data.data) {
+                        userDataToSave = data.data;
+                        console.log('✓ พบข้อมูลใน data.data');
+                    } else if (data.username || data.email || data.weight || data.height) {
+                        // ถ้ามี field ที่เป็นข้อมูลผู้ใช้ แสดงว่า data คือ userData
+                        userDataToSave = data;
+                        console.log('✓ พบข้อมูลใน data โดยตรง');
+                    }
+                    
+                    if (userDataToSave) {
+                        localStorage.setItem('userData', JSON.stringify(userDataToSave));
+                        localStorage.setItem('isLoggedIn', 'true');
+                        console.log('✓ บันทึกข้อมูลผู้ใช้ลง localStorage:', userDataToSave);
+                        console.log('   Fields ใน userData:', Object.keys(userDataToSave));
+                        
+                        // ✅ ตรวจสอบว่ามีข้อมูล weight, height, bmi, calories หรือไม่
+                        const hasBmiData = userDataToSave.weight !== undefined || 
+                                          userDataToSave.height !== undefined || 
+                                          userDataToSave.bmi !== undefined || 
+                                          userDataToSave.calories !== undefined;
+                        
+                        console.log('🔍 ตรวจสอบข้อมูล BMI:');
+                        console.log('   weight:', userDataToSave.weight);
+                        console.log('   height:', userDataToSave.height);
+                        console.log('   bmi:', userDataToSave.bmi);
+                        console.log('   calories:', userDataToSave.calories);
+                        console.log('   มีข้อมูล BMI:', hasBmiData ? '✓ มี' : '✗ ไม่มี');
+                        
+                        // ✅ บันทึก user_id จาก root level ก่อน (ตาม backend guide)
+                        // Backend ส่งมา: data.id, data.user_id, data.user.id, data.user.user_id
+                        let userIdToSave = null;
+                        console.log('🔍 กำลังหา user_id...');
+                        console.log('   data.id:', data.id);
+                        console.log('   data.user_id:', data.user_id);
+                        console.log('   userDataToSave.id:', userDataToSave.id);
+                        console.log('   userDataToSave.user_id:', userDataToSave.user_id);
+                        
+                        if (data.id) {
+                            userIdToSave = data.id; // ✅ ตรวจสอบ root level ก่อน
+                            console.log('   ✓ พบ user_id ใน data.id');
+                        } else if (data.user_id) {
+                            userIdToSave = data.user_id; // ✅ ตรวจสอบ root level
+                            console.log('   ✓ พบ user_id ใน data.user_id');
+                        } else if (userDataToSave.id) {
+                            userIdToSave = userDataToSave.id;
+                            console.log('   ✓ พบ user_id ใน userDataToSave.id');
+                        } else if (userDataToSave.user_id) {
+                            userIdToSave = userDataToSave.user_id;
+                            console.log('   ✓ พบ user_id ใน userDataToSave.user_id');
+                        } else if (userDataToSave.userId) {
+                            userIdToSave = userDataToSave.userId;
+                            console.log('   ✓ พบ user_id ใน userDataToSave.userId');
+                        }
+                        
+                        if (userIdToSave) {
+                            localStorage.setItem('userId', userIdToSave);
+                            localStorage.setItem('user_id', userIdToSave); // บันทึกทั้งสองชื่อ
+                            console.log('✅ บันทึก user_id ลง localStorage:', userIdToSave);
+                            console.log('   localStorage.getItem("userId"):', localStorage.getItem('userId'));
+                            console.log('   localStorage.getItem("user_id"):', localStorage.getItem('user_id'));
+                            
+                            // ✅ ถ้าไม่มีข้อมูล BMI ให้เรียก API profile เพื่อดึงข้อมูลจาก bmi_records
+                            if (!hasBmiData && userIdToSave) {
+                                console.log('📡 ไม่พบข้อมูล BMI ใน login response - จะดึงจาก API profile');
+                                try {
+                                    const profileResponse = await fetch(
+                                        `http://localhost:3002/api/auth/profile?user_id=${userIdToSave}`,
+                                        {
+                                            method: 'GET',
+                                            headers: {
+                                                'Content-Type': 'application/json'
+                                            }
+                                        }
+                                    );
+                                    
+                                    if (profileResponse.ok) {
+                                        const profileData = await profileResponse.json();
+                                        console.log('✓ ได้รับข้อมูลจาก API profile:', profileData);
+                                        
+                                        // รวมข้อมูลจาก profile เข้ากับ userData
+                                        const updatedUserData = {
+                                            ...userDataToSave,
+                                            weight: profileData.weight !== undefined ? profileData.weight : userDataToSave.weight,
+                                            height: profileData.height !== undefined ? profileData.height : userDataToSave.height,
+                                            bmi: profileData.bmi !== undefined ? profileData.bmi : userDataToSave.bmi,
+                                            calories: profileData.calories !== undefined ? profileData.calories : userDataToSave.calories
+                                        };
+                                        
+                                        console.log('✓ อัปเดตข้อมูลผู้ใช้ด้วยข้อมูลจาก profile:', updatedUserData);
+                                        localStorage.setItem('userData', JSON.stringify(updatedUserData));
+                                    } else {
+                                        console.warn('⚠ ไม่สามารถดึงข้อมูลจาก API profile ได้:', profileResponse.status);
+                                    }
+                                } catch (profileError) {
+                                    console.error('✗ Error เรียก API profile:', profileError);
+                                }
+                            }
+                        } else {
+                            console.error('❌ ไม่พบ user_id ใน response!');
+                            console.error('   💡 Backend ควรส่ง user_id กลับมาที่ data.id หรือ data.user_id');
+                            console.error('   Response structure:', JSON.stringify(data, null, 2));
+                        }
+                    } else {
+                        console.warn('⚠ ไม่พบข้อมูลผู้ใช้ใน response');
+                    }
+                    
+                    // Redirect ไปที่หน้า main.html หลังจาก 1.5 วินาที (ให้เวลาเรียก API profile)
+                    setTimeout(() => {
+                        window.location.href = 'main.html';
+                    }, 1500);
+                } else {
+                    // Login ไม่สำเร็จ
+                    const errorMessage = data.message || data.error || 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองอีกครั้ง';
+                    showMessage(errorMessage);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Login';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showMessage('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบว่า Server รันอยู่ที่ port 3002 หรือไม่');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Login';
+            }
+        });
+    </script>
+
+    <style>
+        .message {
+            padding: 12px;
+            margin-bottom: 16px;
+            border-radius: 8px;
+            border: 1px solid;
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
+
+</body>
+</html>

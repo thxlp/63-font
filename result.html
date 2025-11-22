@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calorie Result</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="result-style.css">
+</head>
+<body>
+
+    <div class="background-scene">
+        <div class="leaf-float" style="top: 12%; left: 15%;"></div>
+        <div class="leaf-float" style="top: 8%; right: 20%; transform: rotate(60deg);"></div>
+        <div class="leaf-float" style="bottom: 45%; left: -10px; opacity: 0.6;"></div>
+        
+        <div class="mountain m-1"></div>
+        <div class="mountain m-2"></div>
+        <div class="mountain m-3"></div>
+    </div>
+
+    <div class="app-container">
+        
+        <nav class="top-nav">
+            <a href="#" class="nav-item active">Main</a>
+            <a href="#" class="nav-item">Profile</a>
+        </nav>
+
+        <div class="card-glass result-card">
+            
+            <h3 class="sub-header">เครื่องคำนวณหาค่าแคลอรี่ในอาหาร</h3>
+
+            <div id="imageContainer" class="image-placeholder">
+                <span>รูปภาพ</span>
+            </div>
+
+            <h2 class="food-title" id="foodTitle">ชื่ออาหาร</h2>
+
+            <div class="calorie-result-box">
+                <span class="cal-label">แคลอรี่ (cal)</span>
+                <span class="cal-value" id="calValue">0</span>
+            </div>
+
+            <div class="bottom-action">
+                <button class="btn-back" onclick="history.back()">ย้อนกลับ</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // โหลดข้อมูลจาก localStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            const resultData = localStorage.getItem('scanResult');
+            
+            if (resultData) {
+                try {
+                    const data = JSON.parse(resultData);
+                    displayResult(data);
+                    // ลบข้อมูลออกจาก localStorage หลังจากใช้แล้ว
+                    localStorage.removeItem('scanResult');
+                } catch (error) {
+                    console.error('Error parsing result data:', error);
+                    showError('ไม่สามารถโหลดข้อมูลได้');
+                }
+            } else {
+                showError('ไม่พบข้อมูลผลลัพธ์');
+            }
+        });
+
+        function displayResult(data) {
+            // แสดงรูปภาพ
+            const imageContainer = document.getElementById('imageContainer');
+            if (data.imageData) {
+                imageContainer.innerHTML = `<img src="${data.imageData}" class="real-image" alt="Food Image">`;
+            } else {
+                imageContainer.innerHTML = '<span>รูปภาพ</span>';
+            }
+
+            // แสดงชื่ออาหาร
+            const foodTitle = document.getElementById('foodTitle');
+            if (data.product && data.product.name) {
+                foodTitle.textContent = data.product.name;
+            } else if (data.barcode) {
+                foodTitle.textContent = `บาร์โค้ด: ${data.barcode}`;
+                foodTitle.style.color = '#666';
+            } else {
+                foodTitle.textContent = 'ไม่พบข้อมูลสินค้า';
+                foodTitle.style.color = '#c33';
+            }
+
+            // แสดงแคลอรี่
+            const calValue = document.getElementById('calValue');
+            if (data.product && data.product.nutrition && data.product.nutrition.energy) {
+                const energy = data.product.nutrition.energy;
+                const unit = data.product.nutrition.energy_unit || 'kcal';
+                // แปลง kJ เป็น kcal ถ้าจำเป็น
+                let displayEnergy = energy;
+                let displayUnit = unit;
+                if (unit.toLowerCase() === 'kj' || unit.toLowerCase() === 'kj') {
+                    displayEnergy = (energy / 4.184).toFixed(1);
+                    displayUnit = 'kcal';
+                }
+                calValue.textContent = `${displayEnergy} ${displayUnit}`;
+            } else {
+                calValue.textContent = 'ไม่พบข้อมูล';
+                calValue.style.color = '#999';
+            }
+        }
+
+        function showError(message) {
+            const foodTitle = document.getElementById('foodTitle');
+            foodTitle.textContent = message;
+            foodTitle.style.color = '#c33';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ประวัติตะกร้า</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/cart-style.css">
+</head>
+<body>
+
+    <div class="background-scene">
+        <div class="leaf-float" style="top: 8%; left: 15%;"></div>
+        <div class="leaf-float" style="top: 5%; right: 25%; transform: rotate(90deg);"></div>
+        <div class="leaf-float" style="bottom: 40%; left: -10px; opacity: 0.6;"></div>
+        <div class="leaf-float" style="bottom: 30%; right: 5%; transform: rotate(45deg);"></div>
+        
+        <div class="mountain m-1"></div>
+        <div class="mountain m-2"></div>
+        <div class="mountain m-3"></div>
+    </div>
+
+    <div class="app-container">
+        
+        <nav class="top-nav">
+            <a href="profile.html" class="nav-item">Profile</a>
+            <a href="history.html" class="nav-item active">ประวัติ</a>
+        </nav>
+
+        <div class="card-glass cart-card">
+            <h3 class="section-title">ประวัติตะกร้าที่บันทึก</h3>
+            
+            <div class="cart-content" id="historyContent">
+                <!-- ประวัติจะถูกแสดงที่นี่ -->
+            </div>
+
+            <div class="cart-empty" id="historyEmpty">
+                <div class="empty-icon">📋</div>
+                <div class="empty-text">ยังไม่มีประวัติ</div>
+                <div class="empty-subtext">เมื่อคุณกดปุ่ม "เสร็จสิ้น" ในตะกร้า ประวัติจะถูกบันทึกที่นี่</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Floating Cart Button -->
+    <a href="cart.html" class="fab-cart">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+        </svg>
+        <span class="fab-badge" id="fabBadge" style="display: none;">0</span>
+    </a>
+
+    <script src="/cart.js"></script>
+    <script>
+        // แสดงประวัติตะกร้า
+        function displayHistory() {
+            const history = getCartHistory();
+            const historyContent = document.getElementById('historyContent');
+            const historyEmpty = document.getElementById('historyEmpty');
+            
+            if (history.length === 0) {
+                historyContent.innerHTML = '';
+                historyEmpty.classList.remove('hidden');
+            } else {
+                historyEmpty.classList.add('hidden');
+                
+                historyContent.innerHTML = history.map(item => {
+                    const date = new Date(item.date);
+                    const dateStr = date.toLocaleDateString('th-TH', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    return `
+                        <div class="history-item">
+                            <div class="history-header">
+                                <div class="history-date">${dateStr}</div>
+                                <button class="btn-delete-history" onclick="deleteHistoryItem('${item.id}')">ลบ</button>
+                            </div>
+                            <div class="history-summary">
+                                <div class="history-summary-item">
+                                    <span>จำนวนสินค้า:</span>
+                                    <strong>${item.summary.itemCount} รายการ</strong>
+                                </div>
+                                <div class="history-summary-item">
+                                    <span>พลังงานรวม:</span>
+                                    <strong>${item.summary.totalEnergy} kcal</strong>
+                                </div>
+                                <div class="history-summary-item">
+                                    <span>ไขมัน:</span>
+                                    <strong>${item.summary.totalFat} g</strong>
+                                </div>
+                                <div class="history-summary-item">
+                                    <span>คาร์บ:</span>
+                                    <strong>${item.summary.totalCarbs} g</strong>
+                                </div>
+                                <div class="history-summary-item">
+                                    <span>โปรตีน:</span>
+                                    <strong>${item.summary.totalProtein} g</strong>
+                                </div>
+                            </div>
+                            <div class="history-items">
+                                ${item.items.map(product => {
+                                    const imageUrl = product.image_url || 'https://via.placeholder.com/200?text=No+Image';
+                                    return `
+                                        <div class="history-product-item">
+                                            <img src="${imageUrl}" alt="${product.name}" class="history-product-image" onerror="this.src='https://via.placeholder.com/200?text=No+Image'">
+                                            <div class="history-product-name">${product.name}</div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+        
+        // ลบประวัติรายการ
+        function deleteHistoryItem(historyId) {
+            if (confirm('คุณต้องการลบประวัติรายการนี้หรือไม่?')) {
+                deleteCartHistory(historyId);
+                displayHistory();
+            }
+        }
+        
+        // โหลดประวัติเมื่อเปิดหน้า
+        window.addEventListener('DOMContentLoaded', () => {
+            displayHistory();
+            updateCartBadge();
+        });
+    </script>
+    
+    <style>
+        .history-item {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(109, 33, 33, 0.1);
+        }
+        
+        .history-date {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6D2121;
+        }
+        
+        .btn-delete-history {
+            background: #e63e11;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .btn-delete-history:hover {
+            background: #c4330e;
+        }
+        
+        .history-summary {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(109, 33, 33, 0.05);
+            border-radius: 8px;
+        }
+        
+        .history-summary-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #5D2E2E;
+        }
+        
+        .history-summary-item strong {
+            color: #6D2121;
+            font-weight: 700;
+        }
+        
+        .history-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .history-product-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f8f9fa;
+            padding: 6px 10px;
+            border-radius: 8px;
+            flex: 0 0 auto;
+        }
+        
+        .history-product-image {
+            width: 30px;
+            height: 30px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+        
+        .history-product-name {
+            font-size: 11px;
+            color: #333;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        /* --- Mobile Responsive --- */
+        @media (max-width: 480px) {
+            .app-container {
+                padding: 12px;
+                gap: 12px;
+            }
+            
+            .top-nav {
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+            
+            .nav-item {
+                font-size: 14px;
+            }
+            
+            .card-glass {
+                padding: 10px;
+            }
+            
+            .section-title {
+                font-size: 13px;
+            }
+            
+            .history-item {
+                padding: 12px;
+            }
+            
+            .history-date {
+                font-size: 12px;
+            }
+            
+            .history-summary {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+            
+            .history-summary-item {
+                font-size: 11px;
+            }
+            
+            .history-product-item {
+                padding: 5px 8px;
+            }
+            
+            .history-product-image {
+                width: 25px;
+                height: 25px;
+            }
+            
+            .history-product-name {
+                font-size: 10px;
+                max-width: 100px;
+            }
+            
+            .fab-cart {
+                width: 52px;
+                height: 52px;
+                bottom: 16px;
+                right: 16px;
+            }
+            
+            .fab-cart svg {
+                width: 22px;
+                height: 22px;
+            }
+            
+            .fab-badge {
+                width: 22px;
+                height: 22px;
+                font-size: 11px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .top-nav {
+                gap: 8px;
+            }
+            
+            .nav-item {
+                font-size: 11px;
+            }
+            
+            .history-product-name {
+                max-width: 80px;
+            }
+        }
+        
+        /* --- Touch-friendly improvements --- */
+        @media (hover: none) and (pointer: coarse) {
+            .btn-delete-history,
+            .history-item {
+                -webkit-tap-highlight-color: rgba(109, 33, 33, 0.2);
+            }
+            
+            .nav-item {
+                padding: 5px 8px;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
+            
+            .btn-delete-history {
+                min-height: 44px;
+            }
+        }
+        
+        /* --- Floating Action Button (FAB) --- */
+        .fab-cart {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background-color: #6D2121;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(109, 33, 33, 0.4);
+            z-index: 1000;
+            transition: transform 0.3s, box-shadow 0.3s;
+            color: white;
+            text-decoration: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .fab-cart:active {
+            transform: scale(0.95);
+        }
+        
+        .fab-cart:hover {
+            box-shadow: 0 6px 16px rgba(109, 33, 33, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .fab-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #e63e11;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* --- Safe area for notched devices --- */
+        @supports (padding: max(0px)) {
+            .app-container {
+                padding-left: max(16px, env(safe-area-inset-left));
+                padding-right: max(16px, env(safe-area-inset-right));
+                padding-bottom: max(40px, env(safe-area-inset-bottom));
+            }
+            
+            @media (max-width: 480px) {
+                .app-container {
+                    padding-left: max(12px, env(safe-area-inset-left));
+                    padding-right: max(12px, env(safe-area-inset-right));
+                }
+            }
+            
+            .fab-cart {
+                bottom: max(20px, env(safe-area-inset-bottom));
+                right: max(20px, env(safe-area-inset-right));
+            }
+        }
+        
+        @media (hover: none) and (pointer: coarse) {
+            .fab-cart {
+                bottom: max(20px, env(safe-area-inset-bottom));
+                right: max(20px, env(safe-area-inset-right));
+            }
+        }
+    </style>
+</body>
+</html>
+

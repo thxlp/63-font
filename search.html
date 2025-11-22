@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Page</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/search-style.css">
+</head>
+<body>
+
+    <div class="background-scene">
+        <div class="leaf-float" style="top: 10%; left: 10%;"></div>
+        <div class="leaf-float" style="top: 20%; right: 10%; transform: rotate(90deg);"></div>
+        <div class="leaf-float" style="bottom: 40%; left: 5%; opacity: 0.5;"></div>
+        
+        <div class="mountain m-1"></div>
+        <div class="mountain m-2"></div>
+        <div class="mountain m-3"></div>
+    </div>
+
+    <div class="app-container">
+        
+        <nav class="top-nav">
+            <a href="main.html" class="nav-item">Main</a>
+            <a href="profile.html" class="nav-item">Profile</a>
+            <a href="history.html" class="nav-item">ประวัติ</a>
+        </nav>
+
+        <div class="card-glass full-card" id="searchCard">
+
+            <h4 class="section-title">ค้นหาสินค้าอาหาร</h4>
+            
+            <div class="card-top">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="ค้นหาสินค้าอาหาร" onkeypress="if(event.key === 'Enter') searchProducts()">
+                    <button class="search-icon" onclick="searchProducts()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="loading-indicator" id="loadingIndicator" style="display: none;">
+                    <div class="spinner-small"></div>
+                    <span class="loading-text-small">กำลังค้นหา...</span>
+                </div>
+            </div>
+
+            <div class="card-body-spacer">
+                <div class="error" id="error" style="display: none;"></div>
+                <div class="products-container" id="productsContainer"></div>
+                <div class="product-detail" id="productDetail"></div>
+            </div>
+
+            <div class="card-bottom">
+                <button class="btn-back" onclick="history.back()">ย้อนกลับ</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Floating Cart Button -->
+    <a href="cart.html" class="fab-cart">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+        </svg>
+        <span class="fab-badge" id="fabBadge" style="display: none;">0</span>
+    </a>
+
+    <script src="/cart.js"></script>
+    <script>
+        const DEFAULT_API_ORIGIN = 'http://localhost:3002';
+        const REQUEST_TIMEOUT = 30000; // 30 วินาที
+        const MAX_RETRIES = 2; // จำนวนครั้งที่ลองใหม่สูงสุด
+        let currentProductDetail = null; // เก็บข้อมูลสินค้าปัจจุบันที่แสดง
+        const isSameOriginApi =
+            window.location.origin &&
+            window.location.origin !== 'null' &&
+            window.location.port === '3002';
+        const apiOrigin = isSameOriginApi ? window.location.origin : DEFAULT_API_ORIGIN;
+        const API_BASE_URL = `${apiOrigin}/api/openfoodfacts`;
+
+        async function fetchJson(url, options = {}, retryCount = 0) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+            
+            let response;
+            try {
+                response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+            } catch (fetchError) {
+                clearTimeout(timeoutId);
+                
+                // จัดการ timeout error
+                if (fetchError.name === 'AbortError' || fetchError.message.includes('timeout')) {
+                    // ลองใหม่ถ้ายังไม่เกินจำนวนครั้งที่กำหนด
+                    if (retryCount < MAX_RETRIES) {
+                        console.log(`⏱️ Timeout - ลองใหม่อีกครั้ง (${retryCount + 1}/${MAX_RETRIES})...`);
+                        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // เพิ่ม delay ตามจำนวนครั้งที่ลอง
+                        return fetchJson(url, options, retryCount + 1);
+                    }
+                    throw new Error('OpenFoodFacts API timeout - กรุณาลองใหม่อีกครั้ง');
+                }
+                
+                if (fetchError.message.includes('Failed to fetch') || fetchError.message.includes('NetworkError')) {
+                    throw new Error(`ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ (${apiOrigin}). กรุณาตรวจสอบว่า Server รันอยู่ที่ port 3002 หรือไม่`);
+                }
+                throw fetchError;
+            }
+            
+            const contentType = response.headers.get('content-type') || '';
+            const text = await response.text();
+            if (!response.ok) {
+                let message = text;
+                try {
+                    if (contentType.includes('application/json') || text.trim().startsWith('{') || text.trim().startsWith('[')) {
+                        const parsed = JSON.parse(text);
+                        message = parsed.error || parsed.message || message;
+                    }
+                } catch (err) {
+                    if (text.length > 200) {
+                        message = text.substring(0, 200) + '...';
+                    }
+                }
+                
+                // ตรวจสอบว่า error message มีคำว่า timeout หรือไม่
+                const errorMsg = message || `HTTP ${response.status}`;
+                if (errorMsg.toLowerCase().includes('timeout')) {
+                    // ถ้ายังไม่เกินจำนวนครั้งที่กำหนด ให้ลองใหม่
+                    if (retryCount < MAX_RETRIES) {
+                        console.log(`⏱️ API Timeout - ลองใหม่อีกครั้ง (${retryCount + 1}/${MAX_RETRIES})...`);
+                        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+                        return fetchJson(url, options, retryCount + 1);
+                    }
+                    throw new Error('OpenFoodFacts API timeout - กรุณาลองใหม่อีกครั้ง');
+                }
+                
+                throw new Error(errorMsg);
+            }
+
+            if (!contentType.includes('application/json')) {
+                const trimmedText = text.trim();
+                if (!trimmedText.startsWith('{') && !trimmedText.startsWith('[')) {
+                    throw new Error('เซิร์ฟเวอร์ตอบกลับไม่ใช่ JSON โปรดตรวจสอบว่า backend รันอยู่ที่ ' + apiOrigin);
+                }
+            }
+
+            try {
+                return JSON.parse(text);
+            } catch (parseError) {
+                if (text.includes('------WebKit') || text.includes('multipart')) {
+                    throw new Error('เกิดข้อผิดพลาด: เซิร์ฟเวอร์ตอบกลับเป็น multipart/form-data แทน JSON โปรดตรวจสอบการตั้งค่า backend');
+                }
+                throw new Error('ไม่สามารถแปลง response เป็น JSON ได้: ' + parseError.message);
+            }
+        }
+
+        async function searchProducts() {
+            const searchInput = document.getElementById('searchInput');
+            const query = searchInput.value.trim();
+            
+            if (!query) {
+                showError('กรุณาระบุคำค้นหา');
+                return;
+            }
+
+            // แสดงสถานะกำลังค้นหา
+            showLoadingIndicator(true);
+            hideError();
+            clearProducts();
+            
+            // ยืด card เพื่อแสดงผลลัพธ์
+            expandCard();
+
+            try {
+                const data = await fetchJson(`${API_BASE_URL}/search?q=${encodeURIComponent(query)}&page_size=20`);
+                
+                if (!data.products || data.products.length === 0) {
+                    const container = document.getElementById('productsContainer');
+                    container.innerHTML = '<p style="text-align: center; padding: 40px; color: #666;">ไม่พบสินค้า</p>';
+                } else {
+                    displayProducts(data.products);
+                }
+                
+            } catch (error) {
+                let errorMessage = error.message;
+                
+                // จัดการ timeout error
+                if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
+                    errorMessage = 'OpenFoodFacts API timeout - กรุณาลองใหม่อีกครั้ง\n\nคำแนะนำ:\n1. ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต\n2. OpenFoodFacts API อาจกำลังใช้งานหนัก กรุณารอสักครู่แล้วลองใหม่\n3. ลองค้นหาด้วยคำอื่นที่สั้นกว่า';
+                } else if (error.message.includes('ไม่สามารถเชื่อมต่อ')) {
+                    errorMessage += '\n\nวิธีแก้ไข:\n1. ตรวจสอบว่า Server รันอยู่ที่ port 3002\n2. รันคำสั่ง: npm start หรือ npm run dev\n3. ตรวจสอบ console log ว่า server เริ่มทำงานแล้ว';
+                }
+                
+                showError('เกิดข้อผิดพลาด: ' + errorMessage);
+                console.error('Search error:', error);
+            } finally {
+                // ซ่อนสถานะกำลังค้นหาเมื่อเสร็จ
+                showLoadingIndicator(false);
+            }
+        }
+        
+        function expandCard() {
+            const card = document.getElementById('searchCard');
+            card.classList.add('expanded');
+        }
+        
+        function collapseCard() {
+            const card = document.getElementById('searchCard');
+            card.classList.remove('expanded');
+        }
+
+        async function getProductDetail(barcode) {
+            showLoadingIndicator(true);
+            hideError();
+            try {
+                const data = await fetchJson(`${API_BASE_URL}/product/${barcode}`);
+                displayProductDetail(data.product);
+            } catch (error) {
+                let errorMessage = error.message;
+                
+                // จัดการ timeout error
+                if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
+                    errorMessage = 'OpenFoodFacts API timeout - กรุณาลองใหม่อีกครั้ง\n\nคำแนะนำ:\n1. ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต\n2. OpenFoodFacts API อาจกำลังใช้งานหนัก กรุณารอสักครู่แล้วลองใหม่\n3. ลองเปิดรายละเอียดสินค้าอีกครั้ง';
+                } else if (error.message.includes('ไม่สามารถเชื่อมต่อ')) {
+                    errorMessage += '\n\nวิธีแก้ไข:\n1. ตรวจสอบว่า Server รันอยู่ที่ port 3002\n2. รันคำสั่ง: npm start หรือ npm run dev';
+                }
+                
+                showError('เกิดข้อผิดพลาด: ' + errorMessage);
+                console.error('Product detail error:', error);
+            } finally {
+                showLoadingIndicator(false);
+            }
+        }
+
+        function displayProducts(products) {
+            const container = document.getElementById('productsContainer');
+            container.innerHTML = '';
+
+            if (!products || products.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 40px; color: #666;">ไม่พบสินค้า</p>';
+                return;
+            }
+
+            // แสดงจำนวนผลลัพธ์
+            const resultCount = document.createElement('div');
+            resultCount.className = 'result-count';
+            resultCount.textContent = `พบ ${products.length} รายการ`;
+            container.appendChild(resultCount);
+
+            // สร้าง grid container
+            const grid = document.createElement('div');
+            grid.className = 'products-grid';
+            container.appendChild(grid);
+
+            products.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.onclick = () => getProductDetail(product.id);
+
+                const imageUrl = product.image_url || 'https://via.placeholder.com/200?text=No+Image';
+                const nutriscore = product.nutriscore_grade ? 
+                    `<span class="product-badge nutriscore-${product.nutriscore_grade.toLowerCase()}">Nutri-Score: ${product.nutriscore_grade.toUpperCase()}</span>` : '';
+
+                card.innerHTML = `
+                    <img src="${imageUrl}" alt="${product.name}" class="product-image" onerror="this.src='https://via.placeholder.com/200?text=No+Image'">
+                    <div class="product-info">
+                        <div class="product-name">${product.name}</div>
+                        ${product.brand ? `<div class="product-brand">${product.brand}</div>` : ''}
+                        ${nutriscore}
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function displayProductDetail(product) {
+            const detailDiv = document.getElementById('productDetail');
+            detailDiv.className = 'product-detail active';
+            
+            // เก็บข้อมูลสินค้าปัจจุบัน
+            currentProductDetail = product;
+
+            const imageUrl = product.image_url || product.image_front_url || 'https://via.placeholder.com/300?text=No+Image';
+            const nutriscore = product.nutriscore_grade ? 
+                `<span class="product-badge nutriscore-${product.nutriscore_grade.toLowerCase()}">Nutri-Score: ${product.nutriscore_grade.toUpperCase()}</span>` : '';
+
+            let nutritionHtml = '';
+            if (product.nutrition) {
+                const nutrition = product.nutrition;
+                nutritionHtml = `
+                    <div class="nutrition-grid">
+                        ${nutrition.energy ? `<div class="nutrition-item"><div class="nutrition-label">พลังงาน</div><div class="nutrition-value">${nutrition.energy} ${nutrition.energy_unit || 'kcal'}</div></div>` : ''}
+                        ${nutrition.fat ? `<div class="nutrition-item"><div class="nutrition-label">ไขมัน</div><div class="nutrition-value">${nutrition.fat} ${nutrition.fat_unit || 'g'}</div></div>` : ''}
+                        ${nutrition.carbohydrates ? `<div class="nutrition-item"><div class="nutrition-label">คาร์โบไฮเดรต</div><div class="nutrition-value">${nutrition.carbohydrates} ${nutrition.carbohydrates_unit || 'g'}</div></div>` : ''}
+                        ${nutrition.proteins ? `<div class="nutrition-item"><div class="nutrition-label">โปรตีน</div><div class="nutrition-value">${nutrition.proteins} ${nutrition.proteins_unit || 'g'}</div></div>` : ''}
+                        ${nutrition.salt ? `<div class="nutrition-item"><div class="nutrition-label">เกลือ</div><div class="nutrition-value">${nutrition.salt} ${nutrition.salt_unit || 'g'}</div></div>` : ''}
+                        ${nutrition.fiber ? `<div class="nutrition-item"><div class="nutrition-label">ไฟเบอร์</div><div class="nutrition-value">${nutrition.fiber} ${nutrition.fiber_unit || 'g'}</div></div>` : ''}
+                    </div>
+                `;
+            }
+
+            // ตรวจสอบว่าสินค้าอยู่ในตะกร้าหรือไม่
+            const isInCartProduct = isInCart(product.id);
+            const addToCartBtnClass = isInCartProduct ? 'btn-add-to-cart added' : 'btn-add-to-cart';
+            const addToCartBtnText = isInCartProduct ? 
+                `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>เพิ่มแล้ว</span>` :
+                `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>เพิ่มลงตะกร้า</span>`;
+
+            detailDiv.innerHTML = `
+                <button class="btn-close-detail" onclick="closeProductDetail()">← กลับ</button>
+                <div class="detail-header">
+                    <div class="detail-image">
+                        <img src="${imageUrl}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
+                    </div>
+                    <div class="detail-info">
+                        <h2 class="detail-title">${product.name}</h2>
+                        ${product.brand ? `<p><strong>แบรนด์:</strong> ${product.brand}</p>` : ''}
+                        ${product.generic_name ? `<p><strong>ชื่อทั่วไป:</strong> ${product.generic_name}</p>` : ''}
+                        ${product.quantity ? `<p><strong>ปริมาณ:</strong> ${product.quantity}</p>` : ''}
+                        ${nutriscore}
+                        <button class="${addToCartBtnClass}" onclick="handleAddToCart('${product.id}', this)" data-product-id="${product.id}">
+                            ${addToCartBtnText}
+                        </button>
+                    </div>
+                </div>
+                ${product.ingredients_text ? `
+                    <div class="detail-section">
+                        <h3>ส่วนประกอบ</h3>
+                        <p>${product.ingredients_text}</p>
+                    </div>
+                ` : ''}
+                ${nutritionHtml ? `
+                    <div class="detail-section">
+                        <h3>ข้อมูลโภชนาการ</h3>
+                        ${nutritionHtml}
+                    </div>
+                ` : ''}
+                ${product.categories ? `
+                    <div class="detail-section">
+                        <h3>หมวดหมู่</h3>
+                        <div class="tags">${product.categories.split(',').map(cat => `<span class="tag">${cat.trim()}</span>`).join('')}</div>
+                    </div>
+                ` : ''}
+                ${product.allergens ? `
+                    <div class="detail-section">
+                        <h3>สารก่อภูมิแพ้</h3>
+                        <p>${product.allergens}</p>
+                    </div>
+                ` : ''}
+                ${product.packaging ? `
+                    <div class="detail-section">
+                        <h3>บรรจุภัณฑ์</h3>
+                        <p>${product.packaging}</p>
+                    </div>
+                ` : ''}
+                ${product.url ? `
+                    <div class="detail-section">
+                        <h3>ลิงก์</h3>
+                        <a href="${product.url}" target="_blank" style="color: #667eea;">ดูข้อมูลเพิ่มเติมที่ OpenFoodFacts</a>
+                    </div>
+                ` : ''}
+            `;
+
+            detailDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function closeProductDetail() {
+            const detailDiv = document.getElementById('productDetail');
+            detailDiv.className = 'product-detail';
+            currentProductDetail = null; // ล้างข้อมูลสินค้าปัจจุบัน
+        }
+        
+        // ฟังก์ชันจัดการการเพิ่มสินค้าลงตะกร้า
+        function handleAddToCart(productId, buttonElement) {
+            if (!currentProductDetail || currentProductDetail.id !== productId) {
+                // ถ้ายังไม่มีข้อมูลสินค้า ให้เปิด detail ก่อน
+                getProductDetail(productId);
+                return;
+            }
+            
+            const added = addToCart(currentProductDetail);
+            if (added) {
+                updateAddToCartButton(productId, buttonElement);
+                showNotification('เพิ่มสินค้าลงตะกร้าแล้ว');
+            } else {
+                showNotification('สินค้านี้อยู่ในตะกร้าแล้ว');
+            }
+        }
+        
+        // ฟังก์ชันแสดงการแจ้งเตือน
+        function showNotification(message) {
+            // สร้าง notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #6D2121;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                z-index: 1000;
+                font-size: 14px;
+                font-weight: 600;
+                animation: slideDown 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // ลบ notification หลังจาก 2 วินาที
+            setTimeout(() => {
+                notification.style.animation = 'slideUp 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 2000);
+        }
+        
+        // เพิ่ม CSS animation สำหรับ notification
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateX(-50%) translateY(-20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(0);
+                }
+            }
+            @keyframes slideUp {
+                from {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(-50%) translateY(-20px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        function showLoadingIndicator(show) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            loadingIndicator.style.display = show ? 'flex' : 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function clearProducts() {
+            document.getElementById('productsContainer').innerHTML = '';
+            document.getElementById('productDetail').className = 'product-detail';
+        }
+
+        // รับคำค้นหาจาก URL parameter เมื่อโหลดหน้า
+        window.addEventListener('DOMContentLoaded', () => {
+            updateCartBadge();
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const query = urlParams.get('q');
+            
+            if (query) {
+                document.getElementById('searchInput').value = query;
+                // expand card ก่อนเพื่อให้มีพื้นที่แสดงผล
+                expandCard();
+                searchProducts();
+            }
+        });
+    </script>
+</body>
+</html>

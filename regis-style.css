@@ -1,0 +1,202 @@
+/* Reset & Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background-color: #FFF8E7;
+    background: linear-gradient(180deg, #FFF8E7 0%, #FFE4C4 40%, #FFCC99 100%);
+    min-height: 100vh; /* ใช้ min-height เพื่อให้ยืดหยุ่นถ้าเนื้อหายาว */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow-x: hidden; /* ป้องกันเลื่อนซ้ายขวา แต่ยอมให้เลื่อนลงได้ถ้าจอเล็ก */
+}
+
+/* --- Background Decoration --- */
+.background-scene {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.tree-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(2px);
+}
+
+.big-tree {
+    width: 300px;
+    height: 300px;
+    background-color: #F4A460;
+    top: -50px;
+    right: -80px;
+    opacity: 0.8;
+}
+
+.small-tree {
+    width: 150px;
+    height: 150px;
+    background-color: #E9967A;
+    bottom: 20px;
+    left: -40px;
+    opacity: 0.9;
+}
+
+/* --- Main Layout --- */
+.main-container {
+    width: 100%;
+    padding: 20px;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+}
+
+/* Glass Card (ใช้ได้ทั้ง Login และ Signup) */
+.card-glass {
+    width: 100%;
+    max-width: 340px;
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    padding: 30px 25px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+/* Header */
+.header-section {
+    margin-bottom: 15px;
+}
+
+.header-section svg {
+    margin-bottom: 5px;
+    transform: rotate(-10deg);
+}
+
+.header-section h1 {
+    color: #5D2E2E;
+    font-size: 22px; /* ปรับให้ใหญ่ขึ้นเล็กน้อย */
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+/* Inputs */
+.input-group {
+    text-align: left;
+    margin-bottom: 12px; /* ลดระยะห่างเล็กน้อยเพื่อให้พอดีกับหน้าจอเล็กเมื่อมีหลายช่อง */
+}
+
+.input-group label {
+    display: block;
+    font-size: 11px;
+    color: #5D4037;
+    margin-bottom: 4px;
+    margin-left: 5px;
+    font-weight: 600;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 10px 15px; /* ปรับความสูงช่องให้กะทัดรัดขึ้น */
+    border-radius: 12px;
+    border: none;
+    background: #FFFFFF;
+    font-size: 14px;
+    color: #333;
+    outline: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    transition: box-shadow 0.3s ease;
+}
+
+.input-group input:focus {
+    box-shadow: 0 2px 8px rgba(123, 46, 46, 0.2);
+}
+
+/* Button */
+.btn-primary {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 12px;
+    background-color: #6D2121; /* สีแดงเข้มตามภาพ */
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(109, 33, 33, 0.3);
+    transition: transform 0.2s;
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Message Styles */
+.message {
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+    animation: slideDown 0.3s ease;
+}
+
+.message-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.message-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Footer */
+.footer-links {
+    margin-top: 15px;
+}
+
+.center-text {
+    text-align: center;
+}
+
+.link-text {
+    text-decoration: none;
+    font-size: 11px;
+    color: #5D2E2E;
+}
+
+.link-text b {
+    color: #8B0000;
+}

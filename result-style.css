@@ -1,0 +1,213 @@
+/* --- เพิ่มเติมสำหรับหน้า Result --- */
+
+/* Global & Theme (เหมือนไฟล์อื่น) */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Prompt', 'Poppins', sans-serif;
+}
+
+body {
+    background: linear-gradient(180deg, #FFF8E7 0%, #FFE4C4 50%, #FFCC99 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* --- Background Decoration --- */
+.background-scene {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.mountain {
+    position: absolute;
+    bottom: -50px;
+    border-radius: 50% 50% 0 0;
+}
+
+.m-1 { width: 200px; height: 350px; background-color: #D64A38; left: -50px; z-index: 3; }
+.m-2 { width: 280px; height: 400px; background-color: #E65A45; left: 60px; bottom: -100px; z-index: 2; opacity: 0.9; }
+.m-3 { width: 220px; height: 300px; background-color: #F4A460; right: -20px; bottom: -60px; z-index: 1; }
+
+.leaf-float {
+    position: absolute;
+    width: 20px;
+    height: 12px;
+    background: #F4A460;
+    border-radius: 0 50% 0 50%;
+    opacity: 0.7;
+}
+
+/* --- Layout Container --- */
+.app-container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-bottom: 50px;
+}
+
+/* --- Navigation Bar --- */
+.top-nav {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding-top: 10px;
+    margin-bottom: 10px;
+}
+
+.nav-item {
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: 700;
+    color: #8D5E5E;
+    position: relative;
+    padding-bottom: 5px;
+}
+
+.nav-item.active {
+    color: #6D2121;
+}
+
+.nav-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: #8B0000;
+    border-radius: 2px;
+}
+
+/* --- Glass Card Styling --- */
+.card-glass {
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+}
+
+/* จัด layout ในการ์ดให้เป็นแนวตั้งและกึ่งกลาง */
+.result-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-height: 550px;
+    justify-content: space-between;
+    padding-bottom: 30px;
+}
+
+.sub-header {
+    font-size: 14px;
+    color: #5D2E2E; /* ใช้สีเดียวกับ section-title */
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+/* กล่องสี่เหลี่ยมสีเทาสำหรับใส่รูป */
+.image-placeholder {
+    width: 220px;
+    height: 240px;
+    background-color: #E65A45; /* ใช้สีเดียวกับ mountain m-2 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-radius: 12px;
+}
+
+.image-placeholder span {
+    color: white;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+/* กรณีใส่รูปจริง */
+.real-image {
+    width: 220px;
+    height: 240px;
+    object-fit: cover;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-radius: 12px;
+}
+
+.food-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #000;
+    margin-bottom: 15px;
+}
+
+/* กล่องสีแสดงผลแคลอรี่ (ใช้สีที่เข้ากับธีม) */
+.calorie-result-box {
+    background-color: #F4A460; /* ใช้สีเดียวกับ mountain m-3 และ leaf */
+    width: 100%;
+    max-width: 280px;
+    padding: 15px;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: auto;
+}
+
+.cal-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #000;
+}
+
+.cal-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: #000;
+}
+
+/* จัดตำแหน่งปุ่มด้านล่าง */
+.bottom-action {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+/* ปุ่มย้อนกลับ */
+.btn-back {
+    width: 100%;
+    max-width: 300px;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    background-color: #6D2121;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(109, 33, 33, 0.3);
+    transition: transform 0.2s;
+}
+
+.btn-back:active {
+    transform: scale(0.98);
+}

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMI Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/regis-bmi-style.css">
+</head>
+<body>
+
+    <div class="background-scene">
+        <div class="leaf-float" style="top: 10%; left: 20%;"></div>
+        <div class="leaf-float" style="top: 15%; right: 15%; transform: rotate(45deg);"></div>
+
+        <div class="mountain m-1"></div>
+        <div class="mountain m-2"></div>
+        <div class="mountain m-3"></div>
+    </div>
+
+    <div class="main-container">
+        <div class="card-glass bmi-card">
+            
+            <h2 class="page-title">เครื่องคำนวณหาค่าดัชนีมวลกาย (BMI)</h2>
+
+            <div id="message" class="message" style="display: none;"></div>
+
+            <div class="input-group">
+                <label for="weight">น้ำหนักตัว (kg.)</label>
+                <input type="number" id="weight" placeholder="" required>
+            </div>
+
+            <div class="input-group">
+                <label for="height">ส่วนสูง (cm.)</label>
+                <input type="number" id="height" placeholder="" required>
+            </div>
+
+            <button class="btn-primary" id="calculateBtn">คำนวณ</button>
+
+            <div class="result-section">
+                <div class="result-box">
+                    <span class="res-label">BMI</span>
+                    <span class="res-value" id="bmi-result">0</span>
+                </div>
+
+                <div class="result-box">
+                    <span class="res-label">แคลอรี่ (cal)</span>
+                    <span class="res-value" id="cal-result">0</span>
+                </div>
+            </div>
+
+            <button class="btn-next" id="nextBtn">ต่อไป</button>
+
+        </div>
+    </div>
+
+    <script src="/regis-bmi.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="profile-style.css">
+</head>
+<body>
+
+    <div class="background-scene">
+        <div class="leaf-float" style="top: 10%; left: 8%;"></div>
+        <div class="leaf-float" style="top: 20%; right: 15%; transform: rotate(90deg);"></div>
+        <div class="mountain m-1"></div>
+        <div class="mountain m-2"></div>
+        <div class="mountain m-3"></div>
+    </div>
+
+    <div class="app-container">
+        
+        <nav class="top-nav">
+            <a href="main.html" class="nav-item">Main</a>
+            <a href="profile.html" class="nav-item active">Profile</a>
+        </nav>
+
+        <div class="card-glass profile-card">
+            
+            <div class="avatar-wrapper">
+                <div class="avatar-icon"></div>
+            </div>
+
+            <div class="profile-content">
+                
+                <div class="info-group">
+                    <label>Username</label>
+                    <div class="value-text" id="usernameValue">กำลังโหลด...</div>
+                </div>
+
+                <div class="info-group row-between">
+                    <div class="pass-col">
+                        <label>Password</label>
+                        <div class="value-text pass-dots" id="passwordValue">•••••••••••••••</div>
+                    </div>
+                    <a href="#" class="reset-link">REST PASSWORD</a>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <label>น้ำหนัก</label>
+                        <div class="stat-val" id="weightValue">กำลังโหลด...</div>
+                    </div>
+                    <div class="stat-item">
+                        <label>ส่วนสูง</label>
+                        <div class="stat-val" id="heightValue">กำลังโหลด...</div>
+                    </div>
+                    <div class="stat-item">
+                        <label>BMI</label>
+                        <div class="stat-val" id="bmiValue">กำลังโหลด...</div>
+                    </div>
+                </div>
+
+                <div class="info-group mt-3">
+                    <label>แคลอรี่ที่ควรได้รับ</label>
+                    <div class="value-text" id="caloriesValue">กำลังโหลด...</div>
+                </div>
+
+                <div class="info-group mt-3" style="margin-top: 20px;">
+                    <button class="btn-history" onclick="openHistory()">ประวัติการทำรายการ</button>
+                </div>
+
+                <div class="info-group mt-3" style="margin-top: 15px;">
+                    <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Floating Cart Button -->
+    <a href="cart.html" class="fab-cart">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+        </svg>
+        <span class="fab-badge" id="fabBadge" style="display: none;">0</span>
+    </a>
+
+    <script src="cart.js"></script>
+    <script>
+        // ฟังก์ชันเปิดหน้าประวัติ
+        function openHistory() {
+            window.location.href = 'history.html';
+        }
+
+        // ฟังก์ชันออกจากระบบ
+        function logout() {
+            if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
+                // ลบข้อมูลจาก localStorage
+                localStorage.removeItem('token');
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userData');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('user_id');
+                localStorage.removeItem('isLoggedIn');
+                
+                console.log('✓ ออกจากระบบสำเร็จ - ลบข้อมูลจาก localStorage แล้ว');
+                
+                // Redirect ไปที่หน้า login
+                window.location.href = 'login.html';
+            }
+        }
+
+        // ฟังก์ชันดึงข้อมูลผู้ใช้
+        async function fetchUserData() {
+            console.log('=== เริ่มดึงข้อมูลผู้ใช้ ===');
+            console.log('🔍 ตรวจสอบ localStorage...');
+            
+            // ดึง token หรือ authentication info จาก localStorage (ถ้ามี)
+            const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+            const savedUser = localStorage.getItem('userData');
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            const userId = localStorage.getItem('userId') || localStorage.getItem('user_id');
+            
+            // ลองดึง user_id จาก userData ถ้ามี (สำคัญมากสำหรับ RLS)
+            let user_id = userId;
+            if (savedUser) {
+                try {
+                    const userData = JSON.parse(savedUser);
+                    // ลองดึง user_id จากหลายที่ (รองรับหลายรูปแบบ)
+                    if (userData.id) {
+                        user_id = userData.id;
+                        // บันทึกกลับไป localStorage เพื่อใช้ในครั้งถัดไป
+                        if (!userId) {
+                            localStorage.setItem('userId', userData.id);
+                            localStorage.setItem('user_id', userData.id);
+                        }
+                    } else if (userData.user_id) {
+                        user_id = userData.user_id;
+                        if (!userId) {
+                            localStorage.setItem('userId', userData.user_id);
+                            localStorage.setItem('user_id', userData.user_id);
+                        }
+                    } else if (userData.userId) {
+                        user_id = userData.userId;
+                        if (!userId) {
+                            localStorage.setItem('userId', userData.userId);
+                            localStorage.setItem('user_id', userData.userId);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error parsing userData for user_id:', e);
+                }
+            }
+            
+            // ถ้ายังไม่มี user_id ให้แสดงคำเตือน
+            if (!user_id) {
+                console.warn('⚠ ไม่พบ user_id - อาจมีปัญหาเมื่อดึงข้อมูลจาก bmi_records (RLS)');
+                console.warn('   💡 Backend ควรส่ง user_id กลับมาหรือ frontend ต้องมี user_id');
+            }
+            
+            console.log('Token:', token ? `✓ พบ (${token.substring(0, 20)}...)` : '✗ ไม่พบ');
+            console.log('UserData:', savedUser ? '✓ พบ' : '✗ ไม่พบ');
+            console.log('User ID (จาก localStorage):', userId ? `✓ พบ: ${userId}` : '✗ ไม่พบ');
+            console.log('User ID (หลัง parse):', user_id ? `✓ พบ: ${user_id}` : '✗ ไม่พบ');
+            console.log('IsLoggedIn:', isLoggedIn);
+            
+            // ถ้าไม่มี user_id แต่มี savedUser ให้ลอง parse อีกครั้ง
+            if (!user_id && savedUser) {
+                try {
+                    const userData = JSON.parse(savedUser);
+                    console.log('🔍 ตรวจสอบ userData อีกครั้งเพื่อหา user_id...');
+                    console.log('   Fields ใน userData:', Object.keys(userData));
+                    
+                    // ลองหาจากหลาย field
+                    const possibleUserIdFields = ['id', 'user_id', 'userId', '_id', 'uid'];
+                    for (const field of possibleUserIdFields) {
+                        if (userData[field]) {
+                            user_id = userData[field];
+                            localStorage.setItem('userId', user_id);
+                            localStorage.setItem('user_id', user_id);
+                            console.log(`   ✓ พบ user_id ใน field "${field}": ${user_id}`);
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    console.error('   ✗ Error parsing userData:', e);
+                }
+            }
+            
+            if (!user_id) {
+                console.warn('⚠⚠⚠ ไม่พบ user_id เลย!');
+                console.warn('   💡 ต้องมี user_id เพื่อดึงข้อมูลจาก bmi_records (RLS)');
+                console.warn('   💡 Backend ควรส่ง user_id กลับมาหลัง login');
+            }
+            
+            // สร้าง headers สำหรับ API request
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            
+            // เพิ่ม token ใน headers ถ้ามี
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+                console.log('✓ จะส่ง Bearer Token ไปกับ request');
+            } else if (user_id) {
+                console.log('✓ จะใช้ user_id ใน query parameter (fallback)');
+            } else {
+                console.warn('⚠ ไม่มี token และ user_id - API อาจจะ reject request');
+            }
+            
+            // ลองดึงข้อมูลจาก localStorage ก่อน (แสดงผลทันที)
+            if (savedUser) {
+                try {
+                    const userData = JSON.parse(savedUser);
+                    console.log('✓ พบข้อมูลใน localStorage:', userData);
+                    console.log('   Fields ที่มี:', Object.keys(userData));
+                    
+                    // แสดงข้อมูลจาก localStorage ทันที (เพื่อให้ผู้ใช้เห็นข้อมูลเร็ว)
+                    displayUserData(userData);
+                    
+                    // ตรวจสอบว่ามีข้อมูล weight, height, bmi, calories หรือไม่
+                    const hasRequiredData = (userData.weight !== undefined && userData.weight !== null && userData.weight !== '') || 
+                                          (userData.height !== undefined && userData.height !== null && userData.height !== '') || 
+                                          (userData.bmi !== undefined && userData.bmi !== null && userData.bmi !== '') || 
+                                          (userData.calories !== undefined && userData.calories !== null && userData.calories !== '');
+                    
+                    if (hasRequiredData) {
+                        console.log('✓ ข้อมูลครบถ้วนใน localStorage - แต่จะ refresh จาก API');
+                        // ยังคง refresh จาก API เพื่อให้ได้ข้อมูลล่าสุด
+                    } else {
+                        console.warn('⚠ ข้อมูลใน localStorage ไม่มี weight/height/bmi/calories');
+                        console.warn('   weight:', userData.weight);
+                        console.warn('   height:', userData.height);
+                        console.warn('   bmi:', userData.bmi);
+                        console.warn('   calories:', userData.calories);
+                        console.warn('   💡 ข้อมูลจะแสดง username/email แต่ weight/height/bmi/calories จะแสดง "-"');
+                    }
+                } catch (e) {
+                    console.error('✗ Error parsing saved user data:', e);
+                }
+            } else {
+                console.log('⚠ ไม่พบข้อมูลใน localStorage');
+                console.log('   💡 คำแนะนำ: ต้อง login ก่อน หรือ API ต้องส่งข้อมูลกลับมา');
+            }
+
+            // Helper function สำหรับจัดการ response
+            async function handleResponse(response, endpoint) {
+                try {
+                    const responseText = await response.text();
+                    console.log(`   Response text:`, responseText);
+                    const data = JSON.parse(responseText);
+                    
+                    console.log(`✓ ได้รับข้อมูลจาก ${endpoint}:`, data);
+                    console.log('   Fields ที่มี:', Object.keys(data));
+                    
+                    // ✅ บันทึก token ถ้ามี (รองรับหลายรูปแบบ)
+                    let tokenToSave = null;
+                    if (data.session && data.session.access_token) {
+                        tokenToSave = data.session.access_token;
+                        console.log('   ✓ พบ token ใน data.session.access_token');
+                    } else if (data.token) {
+                        tokenToSave = data.token;
+                        console.log('   ✓ พบ token ใน data.token');
+                    } else if (data.accessToken) {
+                        tokenToSave = data.accessToken;
+                        console.log('   ✓ พบ token ใน data.accessToken');
+                    } else if (data.access_token) {
+                        tokenToSave = data.access_token;
+                        console.log('   ✓ พบ token ใน data.access_token');
+                    }
+                    
+                    if (tokenToSave) {
+                        localStorage.setItem('token', tokenToSave);
+                        console.log('   ✓ บันทึก token ใหม่');
+                    }
+                    
+                    // ตรวจสอบโครงสร้างข้อมูล (อาจอยู่ใน data.user, data.data, หรือ data โดยตรง)
+                    let userData = null;
+                    
+                    if (data.user) {
+                        userData = data.user;
+                        console.log('   ✓ ข้อมูลอยู่ใน data.user');
+                    } else if (data.data) {
+                        userData = data.data;
+                        console.log('   ✓ ข้อมูลอยู่ใน data.data');
+                    } else if (data.username || data.email || data.weight || data.height || data.bmi || data.calories) {
+                        // ถ้ามี field ที่เป็นข้อมูลผู้ใช้ แสดงว่า data คือ userData
+                        userData = data;
+                        console.log('   ✓ ข้อมูลอยู่ใน data โดยตรง');
+                    }
+                    
+                    if (userData) {
+                        console.log('   ข้อมูลผู้ใช้:', userData);
+                        console.log('   Fields ที่มี:', Object.keys(userData));
+                        console.log('   weight:', userData.weight);
+                        console.log('   height:', userData.height);
+                        console.log('   bmi:', userData.bmi);
+                        console.log('   calories:', userData.calories);
+                        
+                        // ตรวจสอบว่ามีข้อมูลผู้ใช้หรือไม่ (ไม่ว่าจะมี weight/height/bmi/calories หรือไม่)
+                        const hasUserData = userData.username || userData.email || 
+                                           (userData.weight !== undefined) || 
+                                           (userData.height !== undefined) || 
+                                           (userData.bmi !== undefined) || 
+                                           (userData.calories !== undefined);
+                        
+                        if (hasUserData) {
+                            console.log('✓ ข้อมูลถูกต้อง - บันทึกลง localStorage และแสดงผล');
+                            localStorage.setItem('userData', JSON.stringify(userData));
+                            
+                            // บันทึก user_id ถ้ามี (สำคัญสำหรับ RLS)
+                            if (userData.id) {
+                                localStorage.setItem('userId', userData.id);
+                                localStorage.setItem('user_id', userData.id);
+                                console.log('   ✓ บันทึก user_id:', userData.id);
+                            } else if (userData.user_id) {
+                                localStorage.setItem('userId', userData.user_id);
+                                localStorage.setItem('user_id', userData.user_id);
+                                console.log('   ✓ บันทึก user_id:', userData.user_id);
+                            } else if (userData.userId) {
+                                localStorage.setItem('userId', userData.userId);
+                                localStorage.setItem('user_id', userData.userId);
+                                console.log('   ✓ บันทึก user_id:', userData.userId);
+                            }
+                            
+                            displayUserData(userData);
+                            return userData;
+                        } else {
+                            console.warn('⚠ ข้อมูลจาก API ไม่มีข้อมูลผู้ใช้เลย');
+                            console.warn('   Response data:', data);
+                        }
+                    } else {
+                        console.warn('⚠ ไม่พบข้อมูลผู้ใช้ใน response');
+                        console.warn('   Response structure:', data);
+                    }
+                } catch (parseError) {
+                    console.error('   ✗ Error parsing JSON:', parseError);
+                }
+                return null;
+            }
+            
+            // ดึงข้อมูลจาก API เพื่อให้ได้ข้อมูลล่าสุด
+            try {
+                let success = false;
+                let triedWithToken = false;
+                
+                // Phase 1: ลองใช้ Bearer Token ก่อน (ถ้ามี)
+                if (token) {
+                    console.log('📡 Phase 1: ลองใช้ Bearer Token');
+                    const tokenEndpoints = [
+                        'http://localhost:3002/api/auth/profile',
+                        'http://localhost:3002/api/auth/me'
+                    ];
+                    
+                    for (const endpoint of tokenEndpoints) {
+                        try {
+                            console.log(`🔄 ลองดึงข้อมูลจาก: ${endpoint} (พร้อม Bearer Token)`);
+                            const response = await fetch(endpoint, {
+                                method: 'GET',
+                                headers: headers,
+                                credentials: 'include'
+                            });
+
+                            console.log(`   Response status: ${response.status}`);
+
+                            if (response.ok) {
+                                triedWithToken = true;
+                                const data = await handleResponse(response, endpoint);
+                                if (data) {
+                                    success = true;
+                                    return;
+                                }
+                            } else if (response.status === 401) {
+                                console.warn('⚠ Unauthorized (401) - Token ไม่ถูกต้องหรือหมดอายุ');
+                                console.warn('   💡 จะลองใช้ user_id แทน (ถ้ามี)');
+                                triedWithToken = true;
+                                break; // หยุดลอง Bearer Token และไปใช้ user_id แทน
+                            }
+                        } catch (e) {
+                            console.error(`   ✗ Error เรียก ${endpoint}:`, e.message);
+                            continue;
+                        }
+                    }
+                }
+                
+                // Phase 2: ถ้า Bearer Token ไม่ได้ผล หรือไม่มี token ให้ลองใช้ user_id
+                if (!success && user_id) {
+                    console.log('📡 Phase 2: ลองใช้ user_id ใน query parameter');
+                    console.log(`   user_id ที่จะใช้: ${user_id}`);
+                    const userIdEndpoints = [
+                        `http://localhost:3002/api/auth/profile?user_id=${user_id}`,
+                        `http://localhost:3002/api/users/profile?user_id=${user_id}`, // ✅ ใช้ /api/users/profile (มี 's')
+                        `http://localhost:3002/api/auth/user?user_id=${user_id}`
+                    ];
+                    
+                    // สร้าง headers ใหม่โดยไม่ใส่ Authorization (เพราะใช้ user_id แทน)
+                    const userIdHeaders = {
+                        'Content-Type': 'application/json',
+                    };
+                    
+                    for (const endpoint of userIdEndpoints) {
+                        try {
+                            console.log(`🔄 ลองดึงข้อมูลจาก: ${endpoint} (พร้อม user_id)`);
+                            const response = await fetch(endpoint, {
+                                method: 'GET',
+                                headers: userIdHeaders,
+                                credentials: 'include'
+                            });
+
+                            console.log(`   Response status: ${response.status}`);
+
+                            if (response.ok) {
+                                const data = await handleResponse(response, endpoint);
+                                if (data) {
+                                    success = true;
+                                    return;
+                                }
+                            } else if (response.status === 401) {
+                                console.warn('⚠ Unauthorized (401) - user_id ไม่ถูกต้องหรือไม่มีสิทธิ์');
+                                const errorText = await response.text().catch(() => '');
+                                console.warn(`   Error message:`, errorText);
+                            } else if (response.status === 404) {
+                                console.log(`   ✗ Not Found (404) - endpoint นี้ไม่มี`);
+                            } else {
+                                const errorText = await response.text().catch(() => '');
+                                console.log(`   ✗ Response ไม่ OK: ${response.status} ${response.statusText}`);
+                                console.log(`   Error message:`, errorText);
+                            }
+                        } catch (e) {
+                            console.error(`   ✗ Error เรียก ${endpoint}:`, e.message);
+                            continue;
+                        }
+                    }
+                } else if (!success && !user_id) {
+                    console.error('❌ ไม่มี user_id - Phase 2 จะไม่ทำงาน');
+                    console.error('   💡 ต้องมี user_id เพื่อดึงข้อมูลจาก bmi_records (RLS)');
+                    console.error('   💡 Backend ควรส่ง user_id กลับมาหลัง login');
+                    console.error('   🔍 ตรวจสอบ localStorage:');
+                    console.error('      - localStorage.getItem("userId"):', localStorage.getItem('userId'));
+                    console.error('      - localStorage.getItem("user_id"):', localStorage.getItem('user_id'));
+                    console.error('      - localStorage.getItem("userData"):', localStorage.getItem('userData') ? 'มี' : 'ไม่มี');
+                    if (localStorage.getItem('userData')) {
+                        try {
+                            const userData = JSON.parse(localStorage.getItem('userData'));
+                            console.error('      - userData.id:', userData.id);
+                            console.error('      - userData.user_id:', userData.user_id);
+                            console.error('      - userData.userId:', userData.userId);
+                            console.error('      - userData keys:', Object.keys(userData));
+                        } catch (e) {
+                            console.error('      - Error parsing userData:', e);
+                        }
+                    }
+                }
+                
+                // Phase 3: ถ้ายังไม่ได้ผล ให้ลอง endpoint ธรรมดา (อาจจะใช้ cookies)
+                // Phase 3 จะทำงานเฉพาะเมื่อไม่มี token และไม่มี user_id
+                if (!success && !triedWithToken && !user_id) {
+                    console.log('📡 Phase 3: ลอง endpoint ธรรมดา (อาจจะใช้ cookies)');
+                    console.warn('   ⚠ Phase 3 อาจจะไม่ทำงานเพราะไม่มี authentication');
+                    const fallbackEndpoints = [
+                        'http://localhost:3002/api/auth/profile',
+                        'http://localhost:3002/api/users/profile', // ✅ ใช้ /api/users/profile (มี 's')
+                        'http://localhost:3002/api/auth/me',
+                        'http://localhost:3002/api/auth/user'
+                        // ⚠️ ไม่เรียก /api/auth/signin เพราะมันเป็น POST method
+                    ];
+                    
+                    for (const endpoint of fallbackEndpoints) {
+                        try {
+                            console.log(`🔄 ลองดึงข้อมูลจาก: ${endpoint}`);
+                            const response = await fetch(endpoint, {
+                                method: 'GET',
+                                headers: headers,
+                                credentials: 'include'
+                            });
+
+                            console.log(`   Response status: ${response.status}`);
+
+                            if (response.ok) {
+                                const data = await handleResponse(response, endpoint);
+                                if (data) {
+                                    success = true;
+                                    return;
+                                }
+                            } else if (response.status === 401) {
+                                console.warn(`   ⚠ Unauthorized (401) - endpoint นี้ต้องการ authentication`);
+                            } else if (response.status === 404) {
+                                console.log(`   ✗ Not Found (404) - endpoint นี้ไม่มี`);
+                            }
+                        } catch (e) {
+                            console.error(`   ✗ Error เรียก ${endpoint}:`, e.message);
+                            continue;
+                        }
+                    }
+                }
+
+                // ถ้าไม่สามารถดึงข้อมูลได้จาก API
+                if (!success) {
+                    console.warn('⚠ ไม่สามารถดึงข้อมูลจาก API ได้ - ใช้ข้อมูลจาก localStorage');
+                    // ข้อมูลจาก localStorage ถูกแสดงไปแล้วข้างบน
+                    if (!savedUser) {
+                        showNoData();
+                    }
+                }
+            } catch (error) {
+                console.error('✗ Error fetching user data:', error);
+                // ข้อมูลจาก localStorage ถูกแสดงไปแล้วข้างบน
+                if (!savedUser) {
+                    showNoData();
+                }
+            }
+        }
+
+        // ฟังก์ชันแสดงข้อมูลผู้ใช้
+        function displayUserData(data) {
+            console.log('=== แสดงข้อมูลผู้ใช้ ===');
+            console.log('ข้อมูลทั้งหมด:', data);
+
+            // Username
+            if (data.username) {
+                document.getElementById('usernameValue').textContent = data.username;
+                console.log('✓ Username:', data.username);
+            } else if (data.email) {
+                document.getElementById('usernameValue').textContent = data.email;
+                console.log('✓ Email:', data.email);
+            } else {
+                document.getElementById('usernameValue').textContent = 'ไม่พบข้อมูล';
+                console.warn('⚠ ไม่พบ username หรือ email');
+            }
+
+            // Password (แสดงเป็นจุด)
+            if (data.password) {
+                const passwordLength = data.password.length;
+                document.getElementById('passwordValue').textContent = '•'.repeat(Math.min(passwordLength, 15));
+            }
+
+            // น้ำหนัก (weight) - รองรับทั้ง number และ string, รวมถึง 0
+            const weightValue = data.weight;
+            if (weightValue !== undefined && weightValue !== null && weightValue !== '') {
+                const weight = typeof weightValue === 'number' ? weightValue : parseFloat(weightValue);
+                if (!isNaN(weight) && weight >= 0 && weight < 1000) {
+                    document.getElementById('weightValue').textContent = `${weight} กก.`;
+                    console.log('✓ น้ำหนัก:', weight);
+                } else {
+                    document.getElementById('weightValue').textContent = '-';
+                    console.warn('⚠ น้ำหนักไม่ถูกต้อง:', weightValue);
+                }
+            } else {
+                document.getElementById('weightValue').textContent = '-';
+                console.warn('⚠ ไม่พบข้อมูลน้ำหนัก');
+            }
+
+            // ส่วนสูง (height) - รองรับทั้ง number และ string, รวมถึง 0
+            const heightValue = data.height;
+            if (heightValue !== undefined && heightValue !== null && heightValue !== '') {
+                const height = typeof heightValue === 'number' ? heightValue : parseFloat(heightValue);
+                if (!isNaN(height) && height >= 0 && height < 300) {
+                    document.getElementById('heightValue').textContent = `${height} ซม.`;
+                    console.log('✓ ส่วนสูง:', height);
+                } else {
+                    document.getElementById('heightValue').textContent = '-';
+                    console.warn('⚠ ส่วนสูงไม่ถูกต้อง:', heightValue);
+                }
+            } else {
+                document.getElementById('heightValue').textContent = '-';
+                console.warn('⚠ ไม่พบข้อมูลส่วนสูง');
+            }
+
+            // BMI - รองรับทั้ง number และ string, รวมถึง 0
+            const bmiValue = data.bmi;
+            if (bmiValue !== undefined && bmiValue !== null && bmiValue !== '') {
+                const bmi = typeof bmiValue === 'number' ? bmiValue : parseFloat(bmiValue);
+                if (!isNaN(bmi) && bmi >= 0 && bmi < 100) {
+                    document.getElementById('bmiValue').textContent = bmi.toFixed(2);
+                    console.log('✓ BMI:', bmi);
+                } else {
+                    document.getElementById('bmiValue').textContent = '-';
+                    console.warn('⚠ BMI ไม่ถูกต้อง:', bmiValue);
+                }
+            } else {
+                document.getElementById('bmiValue').textContent = '-';
+                console.warn('⚠ ไม่พบข้อมูล BMI');
+            }
+
+            // แคลอรี่ที่ควรได้รับ (calories) - รองรับทั้ง number และ string, และทั้ง calories และ calorie, รวมถึง 0
+            const caloriesValue = data.calories !== undefined ? data.calories : data.calorie;
+            if (caloriesValue !== undefined && caloriesValue !== null && caloriesValue !== '') {
+                const calories = typeof caloriesValue === 'number' ? caloriesValue : parseFloat(caloriesValue);
+                if (!isNaN(calories) && calories >= 0 && calories < 10000) {
+                    document.getElementById('caloriesValue').textContent = calories.toFixed(2);
+                    console.log('✓ แคลอรี่:', calories);
+                } else {
+                    document.getElementById('caloriesValue').textContent = '-';
+                    console.warn('⚠ แคลอรี่ไม่ถูกต้อง:', caloriesValue);
+                }
+            } else {
+                document.getElementById('caloriesValue').textContent = '-';
+                console.warn('⚠ ไม่พบข้อมูลแคลอรี่');
+            }
+            
+            console.log('=== สิ้นสุดการแสดงข้อมูล ===');
+        }
+
+        // ฟังก์ชันแสดงเมื่อไม่มีข้อมูล
+        function showNoData() {
+            document.getElementById('usernameValue').textContent = 'ไม่พบข้อมูล';
+            document.getElementById('weightValue').textContent = '-';
+            document.getElementById('heightValue').textContent = '-';
+            document.getElementById('bmiValue').textContent = '-';
+            document.getElementById('caloriesValue').textContent = '-';
+        }
+        
+        // อัปเดต badge และดึงข้อมูลผู้ใช้เมื่อโหลดหน้า
+        window.addEventListener('DOMContentLoaded', () => {
+            updateCartBadge();
+            fetchUserData();
+        });
+    </script>
+</body>
+</html>

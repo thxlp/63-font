@@ -1,0 +1,804 @@
+/* --- Global Styles & Theme (ชุดเดิม) --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Prompt', 'Poppins', sans-serif;
+}
+
+body {
+    background: linear-gradient(180deg, #FFF8E7 0%, #FFE4C4 50%, #FFCC99 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    overflow: hidden; /* หน้านี้เน้นเต็มจอ ไม่ให้เลื่อนฉากหลัง */
+    position: relative;
+}
+
+/* --- Background Decoration --- */
+.background-scene {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.mountain {
+    position: absolute;
+    bottom: -50px;
+    border-radius: 50% 50% 0 0;
+}
+.m-1 { width: 200px; height: 350px; background-color: #D64A38; left: -50px; z-index: 3; }
+.m-2 { width: 280px; height: 400px; background-color: #E65A45; left: 60px; bottom: -100px; z-index: 2; opacity: 0.9; }
+.m-3 { width: 220px; height: 300px; background-color: #F4A460; right: -20px; bottom: -60px; z-index: 1; }
+
+.leaf-float {
+    position: absolute;
+    width: 20px;
+    height: 12px;
+    background: #F4A460;
+    border-radius: 0 50% 0 50%;
+    opacity: 0.7;
+}
+
+/* --- Layout Container --- */
+.app-container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 400px; /* Mobile size limit */
+    height: 100vh; /* บังคับเต็มความสูงหน้าจอ */
+    padding: 16px; /* ใช้ padding เหมือน main.html */
+    display: flex;
+    flex-direction: column;
+    gap: 16px; /* ใช้ gap เหมือน main.html */
+    padding-bottom: 40px; /* ใช้ padding-bottom เหมือน main.html */
+}
+
+/* --- Navigation Bar --- */
+.top-nav {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding-top: 10px;
+    margin-bottom: 10px; /* ใช้ margin-bottom เหมือน main.html */
+    flex-shrink: 0; /* ไม่ให้หดตัว */
+    flex-wrap: wrap;
+}
+
+.nav-item {
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 700;
+    color: #8D5E5E;
+    position: relative;
+    padding-bottom: 5px;
+    white-space: nowrap;
+}
+
+.nav-item.active {
+    color: #6D2121;
+}
+
+.nav-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: #8B0000;
+    border-radius: 2px;
+}
+
+/* --- Full Height Glass Card --- */
+.card-glass {
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 14px; /* ใช้ border-radius เหมือน main.html */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+}
+
+.full-card {
+    flex-grow: 0; /* เริ่มต้นไม่ยืด */
+    margin-bottom: 20px; /* เว้นขอบล่างเล็กน้อย */
+    display: flex;
+    flex-direction: column; /* จัดเรียงแนวตั้ง */
+    padding: 12px; /* ใช้ padding เหมือน main.html */
+    overflow: hidden; /* ป้องกันการเลื่อนของ card เอง */
+    min-height: 180px; /* ใช้ min-height เหมือน main.html top-card */
+    transition: flex-grow 0.3s ease, padding 0.3s ease, min-height 0.3s ease; /* เพิ่ม transition */
+}
+
+.full-card.expanded {
+    flex-grow: 1; /* ยืดเต็มพื้นที่เมื่อมีผลลัพธ์ */
+    padding: 16px; /* เพิ่ม padding เมื่อยืด */
+    min-height: 0; /* ยกเลิก min-height เมื่อ expanded */
+}
+
+/* Search Bar Area */
+.search-bar {
+    position: relative;
+    width: 100%;
+    margin-bottom: 12px; /* ใช้ margin-bottom เหมือน main.html */
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 10px 40px 10px 15px;
+    border-radius: 25px;
+    border: none;
+    outline: none;
+    font-size: 12px; /* ใช้ font-size เหมือน main.html */
+    color: #333;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* ใช้ box-shadow เหมือน main.html */
+}
+
+.search-bar input::placeholder {
+    color: #8D5E5E;
+}
+
+.search-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.7; /* ใช้ opacity เหมือน main.html */
+}
+
+.loading-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 0;
+    margin-top: 8px;
+}
+
+.spinner-small {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(109, 33, 33, 0.1);
+    border-top-color: #6D2121;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-text-small {
+    color: #6D2121;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #5D2E2E; /* สีน้ำตาลแดงเข้ม */
+    margin-bottom: 10px; /* ใช้ margin-bottom เหมือน main.html */
+}
+
+/* Spacer Area */
+.card-body-spacer {
+    flex-grow: 0; /* เริ่มต้นไม่ยืด */
+    overflow-y: auto; /* ให้เลื่อนได้เมื่อมีเนื้อหามาก */
+    overflow-x: hidden; /* ป้องกันการเลื่อนแนวนอน */
+    min-height: 0; /* จำเป็นสำหรับ flexbox overflow */
+    max-height: 0; /* เริ่มต้นซ่อน */
+    opacity: 0; /* เริ่มต้นโปร่งใส */
+    transition: flex-grow 0.3s ease, max-height 0.3s ease, opacity 0.3s ease; /* เพิ่ม transition */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling บน iOS */
+    scrollbar-width: thin; /* Firefox - scrollbar บาง */
+    scrollbar-color: rgba(109, 33, 33, 0.3) transparent; /* Firefox - สี scrollbar */
+    display: flex;
+    flex-direction: column;
+}
+
+.full-card.expanded .card-body-spacer {
+    flex-grow: 1; /* ยืดเมื่อ card expanded */
+    max-height: none; /* ยกเลิก max-height */
+    opacity: 1; /* แสดงผล */
+}
+
+.empty-space {
+    flex-grow: 1; /* ดันให้เต็มพื้นที่ที่เหลือ */
+}
+
+.full-card.expanded .empty-space {
+    display: none; /* ซ่อน empty-space เมื่อ expanded */
+}
+
+/* Custom scrollbar สำหรับ Webkit browsers (Chrome, Safari, Edge) */
+.card-body-spacer::-webkit-scrollbar {
+    width: 6px;
+}
+
+.card-body-spacer::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.card-body-spacer::-webkit-scrollbar-thumb {
+    background: rgba(109, 33, 33, 0.3);
+    border-radius: 3px;
+}
+
+.card-body-spacer::-webkit-scrollbar-thumb:hover {
+    background: rgba(109, 33, 33, 0.5);
+}
+
+/* Button Area */
+.card-bottom {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px; /* ลด margin-top ให้สมดุล */
+    flex-shrink: 0; /* ไม่ให้หดตัวเมื่อมีเนื้อหามาก */
+}
+
+.btn-back {
+    width: 100%;
+    max-width: 300px;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    background-color: #6D2121; /* สีแดงเลือดหมูเข้ม */
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(109, 33, 33, 0.3);
+    transition: transform 0.2s;
+}
+
+.btn-back:active {
+    transform: scale(0.98);
+}
+
+/* --- Search Results Styles --- */
+.status-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    gap: 20px;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(109, 33, 33, 0.1);
+    border-top-color: #6D2121;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-text {
+    color: #6D2121;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.error {
+    background: #fee;
+    color: #c33;
+    padding: 20px;
+    border-radius: 12px;
+    margin: 20px;
+    font-size: 13px;
+    white-space: pre-line;
+    text-align: center;
+    border: 2px solid #fcc;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.empty-state,
+.no-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    gap: 15px;
+}
+
+.empty-icon {
+    font-size: 64px;
+    opacity: 0.6;
+    margin-bottom: 10px;
+}
+
+.empty-text {
+    color: #666;
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.empty-subtext {
+    color: #999;
+    font-size: 13px;
+    margin: 0;
+}
+
+.products-container {
+    padding: 10px 0;
+    width: 100%;
+}
+
+.result-count {
+    padding: 12px 0;
+    color: #5D2E2E;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 1px solid rgba(109, 33, 33, 0.1);
+    margin-bottom: 15px;
+}
+
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.product-card {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+}
+
+.product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.product-image {
+    width: 100%;
+    height: 120px;
+    object-fit: contain;
+    background: #f8f9fa;
+    padding: 8px;
+}
+
+.product-info {
+    padding: 10px;
+}
+
+.product-name {
+    font-size: 0.9em;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #333;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.product-brand {
+    color: #666;
+    font-size: 0.75em;
+    margin-bottom: 5px;
+}
+
+.product-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 0.7em;
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.nutriscore-a { background: #00a152; color: white; }
+.nutriscore-b { background: #85bb2f; color: white; }
+.nutriscore-c { background: #fecb02; color: #333; }
+.nutriscore-d { background: #ee8100; color: white; }
+.nutriscore-e { background: #e63e11; color: white; }
+
+.product-detail {
+    display: none;
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin-top: 20px;
+    border: 2px solid #e0e0e0;
+}
+
+.product-detail.active {
+    display: block;
+}
+
+.btn-close-detail {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background-color: #6D2121;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 15px;
+    transition: transform 0.2s;
+}
+
+.btn-close-detail:active {
+    transform: scale(0.98);
+}
+
+.detail-header {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.detail-image {
+    width: 100%;
+}
+
+.detail-image img {
+    width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: 10px;
+    background: #f8f9fa;
+    padding: 10px;
+}
+
+.detail-info {
+    flex: 1;
+}
+
+.detail-title {
+    font-size: 1.3em;
+    margin-bottom: 10px;
+    color: #333;
+    font-weight: 700;
+}
+
+.detail-info p {
+    font-size: 0.9em;
+    margin-bottom: 8px;
+    color: #555;
+}
+
+.detail-section {
+    margin-bottom: 20px;
+}
+
+.detail-section h3 {
+    color: #6D2121;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 5px;
+    font-size: 1em;
+    font-weight: 600;
+}
+
+.detail-section p {
+    font-size: 0.85em;
+    color: #555;
+    line-height: 1.5;
+}
+
+.nutrition-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.nutrition-item {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.nutrition-label {
+    font-size: 0.75em;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.nutrition-value {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #333;
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tag {
+    background: #e9ecef;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.8em;
+    color: #495057;
+}
+
+.detail-section a {
+    color: #6D2121;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.detail-section a:hover {
+    text-decoration: underline;
+}
+
+/* --- Mobile Responsive --- */
+@media (max-width: 480px) {
+    .app-container {
+        padding: 12px;
+        gap: 12px;
+    }
+    
+    .top-nav {
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .nav-item {
+        font-size: 14px;
+    }
+    
+    .card-glass {
+        padding: 10px;
+    }
+    
+    .section-title {
+        font-size: 13px;
+    }
+    
+    .search-bar input {
+        font-size: 14px;
+        padding: 12px 40px 12px 15px;
+    }
+    
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+    }
+    
+    .product-card {
+        border-radius: 10px;
+    }
+    
+    .product-image {
+        height: 100px;
+    }
+    
+    .product-name {
+        font-size: 0.85em;
+    }
+    
+    .detail-title {
+        font-size: 1.1em;
+    }
+    
+    .nutrition-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .fab-cart {
+        width: 52px;
+        height: 52px;
+        bottom: 16px;
+        right: 16px;
+    }
+    
+    .fab-cart svg {
+        width: 22px;
+        height: 22px;
+    }
+    
+    .fab-badge {
+        width: 22px;
+        height: 22px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 360px) {
+    .top-nav {
+        gap: 10px;
+    }
+    
+    .nav-item {
+        font-size: 12px;
+    }
+    
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 8px;
+    }
+    
+    .product-image {
+        height: 80px;
+    }
+}
+
+/* --- Floating Action Button (FAB) --- */
+.fab-cart {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    background-color: #6D2121;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(109, 33, 33, 0.4);
+    z-index: 1000;
+    transition: transform 0.3s, box-shadow 0.3s;
+    color: white;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.fab-cart:active {
+    transform: scale(0.95);
+}
+
+.fab-cart:hover {
+    box-shadow: 0 6px 16px rgba(109, 33, 33, 0.5);
+    transform: translateY(-2px);
+}
+
+.fab-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #e63e11;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* --- Touch-friendly improvements --- */
+@media (hover: none) and (pointer: coarse) {
+    .product-card,
+    .btn-back,
+    .btn-close-detail,
+    .btn-add-to-cart,
+    .search-icon {
+        -webkit-tap-highlight-color: rgba(109, 33, 33, 0.2);
+    }
+    
+    .nav-item {
+        padding: 5px 8px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .product-card {
+        min-height: 44px;
+    }
+    
+    .btn-back,
+    .btn-close-detail,
+    .btn-add-to-cart {
+        min-height: 44px;
+    }
+    
+    .fab-cart {
+        bottom: max(20px, env(safe-area-inset-bottom));
+        right: max(20px, env(safe-area-inset-right));
+    }
+}
+
+/* --- Safe area for FAB --- */
+@supports (padding: max(0px)) {
+    .fab-cart {
+        bottom: max(20px, env(safe-area-inset-bottom));
+        right: max(20px, env(safe-area-inset-right));
+    }
+}
+
+/* --- Add to Cart Button --- */
+.btn-add-to-cart {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background-color: #6D2121;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: transform 0.2s, background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-add-to-cart:hover {
+    background-color: #5a1a1a;
+}
+
+.btn-add-to-cart:active {
+    transform: scale(0.98);
+}
+
+.btn-add-to-cart.added {
+    background-color: #00a152;
+}
+
+.btn-add-to-cart.added:hover {
+    background-color: #008a45;
+}
+
+/* --- Cart Badge --- */
+.cart-badge {
+    position: relative;
+    display: inline-block;
+}
+
+.cart-badge-count {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #e63e11;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    border: 2px solid white;
+}

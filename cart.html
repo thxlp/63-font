@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตะกร้าสินค้า</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/cart-style.css">
+</head>
+<body>
+
+    <div class="background-scene">
+        <div class="leaf-float" style="top: 8%; left: 15%;"></div>
+        <div class="leaf-float" style="top: 5%; right: 25%; transform: rotate(90deg);"></div>
+        <div class="leaf-float" style="bottom: 40%; left: -10px; opacity: 0.6;"></div>
+        <div class="leaf-float" style="bottom: 30%; right: 5%; transform: rotate(45deg);"></div>
+        
+        <div class="mountain m-1"></div>
+        <div class="mountain m-2"></div>
+        <div class="mountain m-3"></div>
+    </div>
+
+    <div class="app-container">
+        
+        <nav class="top-nav">
+            <a href="main.html" class="nav-item">Main</a>
+            <a href="profile.html" class="nav-item">Profile</a>
+            <a href="cart.html" class="nav-item active cart-badge">
+                ตะกร้า
+                <span class="cart-badge-count" style="display: none;">0</span>
+            </a>
+            <a href="history.html" class="nav-item">ประวัติ</a>
+        </nav>
+
+        <div class="card-glass cart-card">
+            <h3 class="section-title">ตะกร้าสินค้าที่สนใจ</h3>
+            
+            <div class="cart-content" id="cartContent">
+                <!-- สินค้าจะถูกแสดงที่นี่ -->
+            </div>
+
+            <div class="cart-empty" id="cartEmpty">
+                <div class="empty-icon">🛒</div>
+                <div class="empty-text">ตะกร้าว่างเปล่า</div>
+                <div class="empty-subtext">เพิ่มสินค้าที่สนใจลงในตะกร้าได้เลย</div>
+            </div>
+
+            <!-- สรุปแคลอรี่ -->
+            <div class="cart-summary" id="cartSummary" style="display: none;">
+                <div class="summary-title">สรุปแคลอรี่รวม</div>
+                <div class="summary-content">
+                    <div class="summary-item">
+                        <span class="summary-label">พลังงานรวม:</span>
+                        <span class="summary-value-unit">
+                            <span class="summary-value" id="totalEnergy">0</span>
+                            <span class="summary-unit" id="energyUnit">kcal</span>
+                        </span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">ไขมันรวม:</span>
+                        <span class="summary-value-unit">
+                            <span class="summary-value" id="totalFat">0</span>
+                            <span class="summary-unit">g</span>
+                        </span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">คาร์โบไฮเดรตรวม:</span>
+                        <span class="summary-value-unit">
+                            <span class="summary-value" id="totalCarbs">0</span>
+                            <span class="summary-unit">g</span>
+                        </span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">โปรตีนรวม:</span>
+                        <span class="summary-value-unit">
+                            <span class="summary-value" id="totalProtein">0</span>
+                            <span class="summary-unit">g</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cart-actions" id="cartActions" style="display: none;">
+                <div class="action-buttons">
+                    <button class="btn-finish" onclick="finishCart()">เสร็จสิ้น</button>
+                    <button class="btn-clear" onclick="clearCart()">ล้างตะกร้า</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="/cart.js"></script>
+    <script>
+        // โหลดตะกร้าเมื่อเปิดหน้า
+        window.addEventListener('DOMContentLoaded', () => {
+            displayCart();
+            calculateTotalNutrition();
+        });
+    </script>
+</body>
+</html>

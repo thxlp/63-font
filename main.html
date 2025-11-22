@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Menu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="main-style.css">
+</head>
+<body>
+
+    <div class="background-scene">
+        <div class="leaf-float" style="top: 8%; left: 15%;"></div>
+        <div class="leaf-float" style="top: 5%; right: 25%; transform: rotate(90deg);"></div>
+        <div class="leaf-float" style="bottom: 40%; left: -10px; opacity: 0.6;"></div>
+        <div class="leaf-float" style="bottom: 30%; right: 5%; transform: rotate(45deg);"></div>
+        
+        <div class="mountain m-1"></div>
+        <div class="mountain m-2"></div>
+        <div class="mountain m-3"></div>
+    </div>
+
+    <div class="app-container">
+        
+        <nav class="top-nav">
+            <a href="/main.html" class="nav-item active">Main</a>
+            <a href="profile.html" class="nav-item">Profile</a>
+        </nav>
+
+        <div class="card-glass top-card">
+            
+            <h3 class="section-title">ค้นหาสิ่งที่คุณต้องการ</h3>
+
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="ค้นหาวิธีทำอาหาร" onkeypress="if(event.key === 'Enter') performSearch()">
+                <button class="search-icon" onclick="performSearch()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="empty-space"></div>
+        </div>
+
+        <div class="card-glass bottom-card">
+            <h3 class="section-title center-text">เครื่องคำนวณหาค่าแคลอรี่ในอาหาร</h3>
+
+            <div class="button-group">
+                <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+                <button class="action-btn" onclick="document.getElementById('fileInput').click()">
+                    <div class="icon-wrapper">
+                        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <div class="upload-arrow">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="19" x2="12" y2="5"></line>
+                                <polyline points="5 12 12 5 19 12"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                    <span class="btn-text">Upload รูปภาพอาหาร</span>
+                </button>
+            </div>
+
+            <!-- Preview Section -->
+            <div id="previewSection" style="display: none; margin-top: 16px;">
+                <div style="text-align: center; margin-bottom: 12px;">
+                    <img id="imagePreview" style="max-width: 100%; max-height: 200px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" alt="Preview">
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-confirm" onclick="confirmUpload()">ยืนยัน</button>
+                    <button class="btn-cancel" onclick="resetUpload()">ยกเลิก</button>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <div id="loading" style="display: none; text-align: center; padding: 20px; color: #667eea;">
+                <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
+                <p>กำลังสแกนบาร์โค้ดและค้นหาข้อมูลสินค้า...</p>
+            </div>
+
+            <!-- Error Message -->
+            <div id="error" style="display: none; background: #fee; color: #c33; padding: 15px; border-radius: 10px; margin-top: 12px;"></div>
+        </div>
+
+    </div>
+
+    <!-- Floating Cart Button -->
+    <a href="cart.html" class="fab-cart">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+        </svg>
+        <span class="fab-badge" id="fabBadge" style="display: none;">0</span>
+    </a>
+
+    <script src="/cart.js"></script>
+    <script>
+        const DEFAULT_API_ORIGIN = 'http://localhost:3002';
+        const isSameOriginApi = window.location.origin && window.location.origin !== 'null' && window.location.port === '3002';
+        const apiOrigin = isSameOriginApi ? window.location.origin : DEFAULT_API_ORIGIN;
+        const API_BASE_URL = `${apiOrigin}/api/barcode`;
+
+        let selectedFile = null;
+
+        function performSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const query = searchInput.value.trim();
+            
+            if (query) {
+                window.location.href = `search.html?q=${encodeURIComponent(query)}`;
+            } else {
+                window.location.href = 'search.html';
+            }
+        }
+
+        // File Select
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+                return;
+            }
+
+            selectedFile = file;
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                document.getElementById('imagePreview').src = e.target.result;
+                document.getElementById('previewSection').style.display = 'block';
+            };
+            
+            reader.readAsDataURL(file);
+            hideError();
+        }
+
+        // Confirm Upload and Scan
+        async function confirmUpload() {
+            if (!selectedFile) {
+                showError('กรุณาเลือกไฟล์รูปภาพ');
+                return;
+            }
+
+            showLoading(true);
+            hideError();
+
+            const formData = new FormData();
+            formData.append('image', selectedFile);
+
+            try {
+                const data = await fetchJson(`${API_BASE_URL}/scan`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (data.success) {
+                    // เก็บข้อมูลไว้ใน localStorage เพื่อส่งไปหน้า result
+                    const resultData = {
+                        barcode: data.barcode,
+                        product: data.product,
+                        imageData: document.getElementById('imagePreview').src
+                    };
+                    localStorage.setItem('scanResult', JSON.stringify(resultData));
+                    
+                    // ไปที่หน้า result
+                    window.location.href = 'result.html';
+                }
+            } catch (error) {
+                let errorMessage = error.message;
+                if (error.details) {
+                    errorMessage = errorMessage + '\nรายละเอียด: ' + error.details;
+                }
+                showError('เกิดข้อผิดพลาด: ' + errorMessage);
+                console.error('Scan error:', error);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Reset Upload
+        function resetUpload() {
+            selectedFile = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('previewSection').style.display = 'none';
+            hideError();
+        }
+
+        // Helper functions
+        async function fetchJson(url, options) {
+            let response;
+            try {
+                response = await fetch(url, options);
+            } catch (fetchError) {
+                if (fetchError.message.includes('Failed to fetch') || fetchError.message.includes('NetworkError')) {
+                    throw new Error(`ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ (${apiOrigin}). กรุณาตรวจสอบว่า Server รันอยู่ที่ port 3002 หรือไม่`);
+                }
+                throw fetchError;
+            }
+            
+            const contentType = response.headers.get('content-type') || '';
+            const text = await response.text();
+            
+            if (!response.ok) {
+                let message = text;
+                let details = null;
+                try {
+                    if (contentType.includes('application/json') || text.trim().startsWith('{') || text.trim().startsWith('[')) {
+                        const parsed = JSON.parse(text);
+                        message = parsed.error || parsed.message || message;
+                        details = parsed.details || null;
+                    }
+                } catch (err) {
+                    if (text.length > 200) {
+                        message = text.substring(0, 200) + '...';
+                    }
+                }
+                const error = new Error(message || `HTTP ${response.status}`);
+                if (details) error.details = details;
+                throw error;
+            }
+
+            if (!contentType.includes('application/json')) {
+                const trimmedText = text.trim();
+                if (!trimmedText.startsWith('{') && !trimmedText.startsWith('[')) {
+                    throw new Error('เซิร์ฟเวอร์ตอบกลับไม่ใช่ JSON โปรดตรวจสอบว่า backend รันอยู่ที่ ' + apiOrigin);
+                }
+            }
+
+            try {
+                return JSON.parse(text);
+            } catch (parseError) {
+                if (text.includes('------WebKit') || text.includes('multipart')) {
+                    throw new Error('เกิดข้อผิดพลาด: เซิร์ฟเวอร์ตอบกลับเป็น multipart/form-data แทน JSON');
+                }
+                throw new Error('ไม่สามารถแปลง response เป็น JSON ได้: ' + parseError.message);
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.innerHTML = message.replace(/\n/g, '<br>');
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+        
+        // อัปเดต badge เมื่อโหลดหน้า
+        window.addEventListener('DOMContentLoaded', () => {
+            updateCartBadge();
+        });
+    </script>
+
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .btn-confirm, .btn-cancel {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-confirm {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-confirm:active, .btn-cancel:active {
+            transform: scale(0.98);
+        }
+    </style>
+</body>
+</html>
