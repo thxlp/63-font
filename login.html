@@ -214,41 +214,145 @@
                             console.log('   localStorage.getItem("userId"):', localStorage.getItem('userId'));
                             console.log('   localStorage.getItem("user_id"):', localStorage.getItem('user_id'));
                             
-                            // ✅ ถ้าไม่มีข้อมูล BMI ให้เรียก API profile เพื่อดึงข้อมูลจาก bmi_records
-                            if (!hasBmiData && userIdToSave) {
-                                console.log('📡 ไม่พบข้อมูล BMI ใน login response - จะดึงจาก API profile');
+                            // ✅ เรียก API profile เพื่อดึงข้อมูล BMI จาก bmi_records เสมอ (เพื่อให้ได้ข้อมูลล่าสุด)
+                            console.log('📡 กำลังดึงข้อมูล BMI จาก API profile...');
+                            
+                            // ลองหลาย endpoint และหลายวิธี (ใช้ endpoint ที่มีจริงตาม availableRoutes)
+                            const profileEndpoints = [
+                                `http://localhost:3002/api/data/bmi_records?user_id=${userIdToSave}`,
+                                `http://localhost:3002/api/data/bmi_records`,
+                                `http://localhost:3002/api/auth/profile?user_id=${userIdToSave}`,
+                                `http://localhost:3002/api/users/profile?user_id=${userIdToSave}`,
+                                `http://localhost:3002/api/auth/profile`
+                            ];
+                            
+                            let profileDataFetched = false;
+                            
+                            // ใช้ async/await ใน for loop
+                            for (const endpoint of profileEndpoints) {
+                                if (profileDataFetched) break; // หยุดถ้าดึงข้อมูลสำเร็จแล้ว
+                                
                                 try {
-                                    const profileResponse = await fetch(
-                                        `http://localhost:3002/api/auth/profile?user_id=${userIdToSave}`,
-                                        {
-                                            method: 'GET',
-                                            headers: {
-                                                'Content-Type': 'application/json'
-                                            }
-                                        }
-                                    );
+                                    console.log(`🔄 ลองดึงข้อมูลจาก: ${endpoint}`);
+                                    
+                                    const headers = {
+                                        'Content-Type': 'application/json'
+                                    };
+                                    
+                                    // เพิ่ม token ถ้ามี
+                                    if (tokenToSave) {
+                                        headers['Authorization'] = `Bearer ${tokenToSave}`;
+                                    }
+                                    
+                                    const profileResponse = await fetch(endpoint, {
+                                        method: 'GET',
+                                        headers: headers
+                                    });
+                                    
+                                    console.log(`   Response status: ${profileResponse.status}`);
                                     
                                     if (profileResponse.ok) {
-                                        const profileData = await profileResponse.json();
+                                        const responseText = await profileResponse.text();
+                                        console.log('   Response text:', responseText);
+                                        
+                                        let profileData;
+                                        try {
+                                            profileData = JSON.parse(responseText);
+                                        } catch (e) {
+                                            console.error('   ✗ Error parsing JSON:', e);
+                                            continue;
+                                        }
+                                        
                                         console.log('✓ ได้รับข้อมูลจาก API profile:', profileData);
+                                        console.log('   Response type:', Array.isArray(profileData) ? 'Array' : typeof profileData);
+                                        console.log('   Response keys:', Array.isArray(profileData) ? `Array[${profileData.length}]` : Object.keys(profileData));
                                         
-                                        // รวมข้อมูลจาก profile เข้ากับ userData
-                                        const updatedUserData = {
-                                            ...userDataToSave,
-                                            weight: profileData.weight !== undefined ? profileData.weight : userDataToSave.weight,
-                                            height: profileData.height !== undefined ? profileData.height : userDataToSave.height,
-                                            bmi: profileData.bmi !== undefined ? profileData.bmi : userDataToSave.bmi,
-                                            calories: profileData.calories !== undefined ? profileData.calories : userDataToSave.calories
-                                        };
+                                        // ตรวจสอบโครงสร้างข้อมูล (อาจอยู่ใน data.user, data.data, array, หรือ data โดยตรง)
+                                        let bmiData = null;
                                         
-                                        console.log('✓ อัปเดตข้อมูลผู้ใช้ด้วยข้อมูลจาก profile:', updatedUserData);
-                                        localStorage.setItem('userData', JSON.stringify(updatedUserData));
+                                        // ถ้าเป็น array ให้ใช้ element แรก (สำหรับ bmi_records endpoint)
+                                        if (Array.isArray(profileData) && profileData.length > 0) {
+                                            // หา record ล่าสุด (อาจจะเรียงตาม id หรือ created_at)
+                                            bmiData = profileData[0];
+                                            console.log('   ✓ ข้อมูลอยู่ใน array[0]');
+                                            console.log(`   ✓ พบ ${profileData.length} records`);
+                                        } else if (profileData.user) {
+                                            bmiData = profileData.user;
+                                            console.log('   ✓ ข้อมูลอยู่ใน profileData.user');
+                                        } else if (profileData.data) {
+                                            // ถ้า data เป็น array ให้ใช้ element แรก
+                                            if (Array.isArray(profileData.data) && profileData.data.length > 0) {
+                                                bmiData = profileData.data[0];
+                                                console.log('   ✓ ข้อมูลอยู่ใน profileData.data[0]');
+                                            } else {
+                                                bmiData = profileData.data;
+                                                console.log('   ✓ ข้อมูลอยู่ใน profileData.data');
+                                            }
+                                        } else if (profileData.weight !== undefined || profileData.height !== undefined || 
+                                                  profileData.bmi !== undefined || profileData.calories !== undefined) {
+                                            bmiData = profileData;
+                                            console.log('   ✓ ข้อมูลอยู่ใน profileData โดยตรง');
+                                        }
+                                        
+                                        if (bmiData) {
+                                            console.log('   bmiData structure:', bmiData);
+                                            console.log('   bmiData keys:', Object.keys(bmiData));
+                                            
+                                            // ตรวจสอบว่ามีข้อมูล BMI จริงๆ หรือไม่
+                                            const hasBmiData = (bmiData.weight !== undefined && bmiData.weight !== null && bmiData.weight !== '') ||
+                                                              (bmiData.height !== undefined && bmiData.height !== null && bmiData.height !== '') ||
+                                                              (bmiData.bmi !== undefined && bmiData.bmi !== null && bmiData.bmi !== '') ||
+                                                              (bmiData.calories !== undefined && bmiData.calories !== null && bmiData.calories !== '');
+                                            
+                                            console.log('   hasBmiData:', hasBmiData);
+                                            console.log('   weight:', bmiData.weight, typeof bmiData.weight);
+                                            console.log('   height:', bmiData.height, typeof bmiData.height);
+                                            console.log('   bmi:', bmiData.bmi, typeof bmiData.bmi);
+                                            console.log('   calories:', bmiData.calories, typeof bmiData.calories);
+                                            
+                                            if (hasBmiData) {
+                                                console.log('   ✅ ข้อมูล BMI ที่ได้รับ:', {
+                                                    weight: bmiData.weight,
+                                                    height: bmiData.height,
+                                                    bmi: bmiData.bmi,
+                                                    calories: bmiData.calories
+                                                });
+                                                
+                                                // รวมข้อมูลจาก profile เข้ากับ userData
+                                                const updatedUserData = {
+                                                    ...userDataToSave,
+                                                    weight: bmiData.weight !== undefined && bmiData.weight !== null ? bmiData.weight : userDataToSave.weight,
+                                                    height: bmiData.height !== undefined && bmiData.height !== null ? bmiData.height : userDataToSave.height,
+                                                    bmi: bmiData.bmi !== undefined && bmiData.bmi !== null ? bmiData.bmi : userDataToSave.bmi,
+                                                    calories: bmiData.calories !== undefined && bmiData.calories !== null ? bmiData.calories : userDataToSave.calories
+                                                };
+                                                
+                                                console.log('✅ อัปเดตข้อมูลผู้ใช้ด้วยข้อมูลจาก profile:', updatedUserData);
+                                                localStorage.setItem('userData', JSON.stringify(updatedUserData));
+                                                profileDataFetched = true;
+                                                break; // หยุดเมื่อดึงข้อมูลสำเร็จ
+                                            } else {
+                                                console.warn('   ⚠ พบโครงสร้างข้อมูลแต่ไม่มีข้อมูล BMI');
+                                                console.warn('   bmiData:', JSON.stringify(bmiData, null, 2));
+                                            }
+                                        } else {
+                                            console.warn('   ⚠ ไม่พบข้อมูล BMI ใน response structure');
+                                            console.warn('   profileData:', JSON.stringify(profileData, null, 2));
+                                        }
                                     } else {
-                                        console.warn('⚠ ไม่สามารถดึงข้อมูลจาก API profile ได้:', profileResponse.status);
+                                        console.warn(`   ⚠ ไม่สามารถดึงข้อมูลจาก ${endpoint} ได้: ${profileResponse.status}`);
+                                        if (profileResponse.status === 404) {
+                                            continue; // ลอง endpoint ถัดไป
+                                        }
                                     }
                                 } catch (profileError) {
-                                    console.error('✗ Error เรียก API profile:', profileError);
+                                    console.error(`   ✗ Error เรียก ${endpoint}:`, profileError);
+                                    continue; // ลอง endpoint ถัดไป
                                 }
+                            }
+                            
+                            if (!profileDataFetched) {
+                                console.warn('⚠ ไม่สามารถดึงข้อมูล BMI จาก API profile ได้ - ใช้ข้อมูลที่มีอยู่');
                             }
                         } else {
                             console.error('❌ ไม่พบ user_id ใน response!');
