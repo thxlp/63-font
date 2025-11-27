@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ตะกร้าสินค้า</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/cart-style.css">
+    <link rel="stylesheet" href="../styles/cart-style.css">
 </head>
 <body>
 
@@ -24,12 +24,11 @@
         
         <nav class="top-nav">
             <a href="main.html" class="nav-item">Main</a>
-            <a href="profile.html" class="nav-item">Profile</a>
+            <a href="history.html" class="nav-item">History</a>
             <a href="cart.html" class="nav-item active cart-badge">
-                ตะกร้า
+                Basket
                 <span class="cart-badge-count" style="display: none;">0</span>
             </a>
-            <a href="history.html" class="nav-item">ประวัติ</a>
         </nav>
 
         <div class="card-glass cart-card">
@@ -48,12 +47,25 @@
             <!-- สรุปแคลอรี่ -->
             <div class="cart-summary" id="cartSummary" style="display: none;">
                 <div class="summary-title">สรุปแคลอรี่รวม</div>
+
+                <div class="calorie-warning" id="calorieWarning" style="display: none;">
+                    <div class="warning-icon">⚠️</div>
+                    <div class="warning-text" id="warningText"></div>
+                </div>
+
                 <div class="summary-content">
                     <div class="summary-item">
                         <span class="summary-label">พลังงานรวม:</span>
                         <span class="summary-value-unit">
                             <span class="summary-value" id="totalEnergy">0</span>
                             <span class="summary-unit" id="energyUnit">kcal</span>
+                        </span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">เป้าหมายแคลอรี่:</span>
+                        <span class="summary-value-unit">
+                            <span class="summary-value" id="targetCalories">-</span>
+                            <span class="summary-unit">kcal</span>
                         </span>
                     </div>
                     <div class="summary-item">
@@ -82,7 +94,7 @@
 
             <div class="cart-actions" id="cartActions" style="display: none;">
                 <div class="action-buttons">
-                    <button class="btn-finish" onclick="finishCart()">เสร็จสิ้น</button>
+                    <button class="btn-finish" onclick="finishCart()">เสร็จสิ้น < a href="history.html">History</a></button>
                     <button class="btn-clear" onclick="clearCart()">ล้างตะกร้า</button>
                 </div>
             </div>
@@ -90,7 +102,7 @@
 
     </div>
 
-    <script src="/cart.js"></script>
+    <script src="../scripts/cart.js"></script>
     <script>
         // โหลดตะกร้าเมื่อเปิดหน้า
         window.addEventListener('DOMContentLoaded', () => {

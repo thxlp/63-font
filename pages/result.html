@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calorie Result</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles/result-style.css">
+</head>
+<body>
+
+    <div class="background-scene">
+        <div class="leaf-float" style="top: 12%; left: 15%;"></div>
+        <div class="leaf-float" style="top: 8%; right: 20%; transform: rotate(60deg);"></div>
+        <div class="leaf-float" style="bottom: 45%; left: -10px; opacity: 0.6;"></div>
+        
+        <div class="mountain m-1"></div>
+        <div class="mountain m-2"></div>
+        <div class="mountain m-3"></div>
+    </div>
+
+    <div class="app-container">
+        
+        <nav class="top-nav">
+            <a href="main.html" class="nav-item active">Main</a>
+            <a href="profile.html" class="nav-item">Profile</a>
+        </nav>
+
+        <div class="card-glass result-card">
+            
+            <h3 class="sub-header">เครื่องคำนวณหาค่าแคลอรี่ในอาหาร</h3>
+
+            <div id="imageContainer" class="image-placeholder">
+                <span>รูปภาพ</span>
+            </div>
+
+            <h2 class="food-title" id="foodTitle">ชื่ออาหาร</h2>
+
+            <div class="calorie-result-box">
+                <span class="cal-label">แคลอรี่ (cal)</span>
+                <span class="cal-value" id="calValue">0</span>
+            </div>
+
+            <div class="bottom-action">
+                <button class="btn-add-to-cart" id="addToCartBtn" onclick="handleAddToCart()" style="display: none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>เพิ่มลงตะกร้า</span>
+                </button>
+                <button class="btn-back" onclick="history.back()">ย้อนกลับ</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Floating Cart Button -->
+    <a href="cart.html" class="fab-cart">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+        </svg>
+        <span class="fab-badge" id="fabBadge" style="display: none;">0</span>
+    </a>
+
+    <script src="../scripts/cart.js"></script>
+    <script>
+        let currentProduct = null; // เก็บข้อมูลสินค้าปัจจุบัน
+
+        // โหลดข้อมูลจาก localStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            // อัปเดต badge ตะกร้า
+            updateCartBadge();
+            
+            const resultData = localStorage.getItem('scanResult');
+            
+            if (resultData) {
+                try {
+                    const data = JSON.parse(resultData);
+                    currentProduct = data.product; // เก็บข้อมูลสินค้าไว้
+                    displayResult(data);
+                    updateAddToCartButton(); // อัปเดตสถานะปุ่ม
+                    // ลบข้อมูลออกจาก localStorage หลังจากใช้แล้ว
+                    localStorage.removeItem('scanResult');
+                } catch (error) {
+                    console.error('Error parsing result data:', error);
+                    showError('ไม่สามารถโหลดข้อมูลได้');
+                }
+            } else {
+                showError('ไม่พบข้อมูลผลลัพธ์');
+            }
+        });
+
+        function displayResult(data) {
+            // แสดงรูปภาพ
+            const imageContainer = document.getElementById('imageContainer');
+            if (data.imageData) {
+                imageContainer.innerHTML = `<img src="${data.imageData}" class="real-image" alt="Food Image">`;
+            } else {
+                imageContainer.innerHTML = '<span>รูปภาพ</span>';
+            }
+
+            // แสดงชื่ออาหาร
+            const foodTitle = document.getElementById('foodTitle');
+            if (data.product && data.product.name) {
+                foodTitle.textContent = data.product.name;
+            } else if (data.barcode) {
+                foodTitle.textContent = `บาร์โค้ด: ${data.barcode}`;
+                foodTitle.style.color = '#666';
+            } else {
+                foodTitle.textContent = 'ไม่พบข้อมูลสินค้า';
+                foodTitle.style.color = '#c33';
+            }
+
+            // แสดงแคลอรี่
+            const calValue = document.getElementById('calValue');
+            if (data.product && data.product.nutrition && data.product.nutrition.energy) {
+                const energy = data.product.nutrition.energy;
+                const unit = data.product.nutrition.energy_unit || 'kcal';
+                // แปลง kJ เป็น kcal ถ้าจำเป็น
+                let displayEnergy = energy;
+                let displayUnit = unit;
+                if (unit.toLowerCase() === 'kj' || unit.toLowerCase() === 'kj') {
+                    displayEnergy = (energy / 4.184).toFixed(1);
+                    displayUnit = 'kcal';
+                }
+                calValue.textContent = `${displayEnergy} ${displayUnit}`;
+            } else {
+                calValue.textContent = 'ไม่พบข้อมูล';
+                calValue.style.color = '#999';
+            }
+        }
+
+        // อัปเดตสถานะปุ่มเพิ่มตะกร้า
+        function updateAddToCartButton() {
+            const addToCartBtn = document.getElementById('addToCartBtn');
+            if (!addToCartBtn || !currentProduct || !currentProduct.id) {
+                return;
+            }
+
+            // แสดงปุ่ม
+            addToCartBtn.style.display = 'flex';
+
+            // ตรวจสอบว่าสินค้าอยู่ในตะกร้าหรือไม่
+            const isInCartProduct = isInCart(currentProduct.id);
+            
+            if (isInCartProduct) {
+                addToCartBtn.classList.add('added');
+                addToCartBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>เพิ่มแล้ว</span>
+                `;
+            } else {
+                addToCartBtn.classList.remove('added');
+                addToCartBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>เพิ่มลงตะกร้า</span>
+                `;
+            }
+        }
+
+        // ฟังก์ชันจัดการการเพิ่มสินค้าลงตะกร้า
+        function handleAddToCart() {
+            if (!currentProduct || !currentProduct.id) {
+                showNotification('ไม่พบข้อมูลสินค้า');
+                return;
+            }
+
+            const added = addToCart(currentProduct);
+            
+            if (added) {
+                showNotification('เพิ่มสินค้าลงตะกร้าแล้ว');
+                updateAddToCartButton();
+            } else {
+                showNotification('สินค้านี้อยู่ในตะกร้าแล้ว');
+            }
+        }
+
+        // ฟังก์ชันแสดงการแจ้งเตือน
+        function showNotification(message) {
+            // สร้าง notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #6D2121;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                z-index: 1000;
+                font-size: 14px;
+                font-weight: 600;
+                animation: slideDown 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // ลบ notification หลังจาก 2 วินาที
+            setTimeout(() => {
+                notification.style.animation = 'slideUp 0.3s ease';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 2000);
+        }
+
+        // เพิ่ม CSS animation สำหรับ notification
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateX(-50%) translateY(-20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(0);
+                }
+            }
+            @keyframes slideUp {
+                from {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(-50%) translateY(-20px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        function showError(message) {
+            const foodTitle = document.getElementById('foodTitle');
+            foodTitle.textContent = message;
+            foodTitle.style.color = '#c33';
+        }
+    </script>
+</body>
+</html>

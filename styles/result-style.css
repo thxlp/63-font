@@ -188,12 +188,14 @@ body {
 .bottom-action {
     width: 100%;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
     margin-top: 20px;
 }
 
-/* ปุ่มย้อนกลับ */
-.btn-back {
+/* ปุ่มเพิ่มลงตะกร้า */
+.btn-add-to-cart {
     width: 100%;
     max-width: 300px;
     padding: 12px;
@@ -205,9 +207,168 @@ body {
     font-weight: 600;
     cursor: pointer;
     box-shadow: 0 4px 6px rgba(109, 33, 33, 0.3);
-    transition: transform 0.2s;
+    transition: transform 0.2s, background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-add-to-cart:hover {
+    background-color: #5a1a1a;
+}
+
+.btn-add-to-cart:active {
+    transform: scale(0.98);
+}
+
+.btn-add-to-cart.added {
+    background-color: #00a152;
+}
+
+.btn-add-to-cart.added:hover {
+    background-color: #008a45;
+}
+
+/* ปุ่มย้อนกลับ */
+.btn-back {
+    width: 100%;
+    max-width: 300px;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    background-color: #8D5E5E;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(141, 94, 94, 0.3);
+    transition: transform 0.2s, background 0.2s;
+}
+
+.btn-back:hover {
+    background-color: #6D2121;
 }
 
 .btn-back:active {
     transform: scale(0.98);
+}
+
+/* --- Floating Action Button (FAB) --- */
+.fab-cart {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    background-color: #6D2121;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(109, 33, 33, 0.4);
+    z-index: 1000;
+    transition: transform 0.3s, box-shadow 0.3s;
+    color: white;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.fab-cart:active {
+    transform: scale(0.95);
+}
+
+.fab-cart:hover {
+    box-shadow: 0 6px 16px rgba(109, 33, 33, 0.5);
+    transform: translateY(-2px);
+}
+
+.fab-cart svg {
+    width: 24px;
+    height: 24px;
+}
+
+.fab-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #e63e11;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* --- Mobile Responsive --- */
+@media (max-width: 480px) {
+    .app-container {
+        padding: 12px;
+        gap: 12px;
+    }
+    
+    .top-nav {
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    
+    .nav-item {
+        font-size: 14px;
+    }
+    
+    .card-glass {
+        padding: 10px;
+    }
+    
+    .fab-cart {
+        width: 52px;
+        height: 52px;
+        bottom: 16px;
+        right: 16px;
+    }
+    
+    .fab-cart svg {
+        width: 22px;
+        height: 22px;
+    }
+    
+    .fab-badge {
+        width: 22px;
+        height: 22px;
+        font-size: 11px;
+    }
+}
+
+/* --- Safe area for notched devices --- */
+@supports (padding: max(0px)) {
+    .app-container {
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+        padding-bottom: max(50px, env(safe-area-inset-bottom));
+    }
+    
+    @media (max-width: 480px) {
+        .app-container {
+            padding-left: max(12px, env(safe-area-inset-left));
+            padding-right: max(12px, env(safe-area-inset-right));
+        }
+    }
+    
+    .fab-cart {
+        bottom: max(20px, env(safe-area-inset-bottom));
+        right: max(20px, env(safe-area-inset-right));
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .fab-cart {
+        bottom: max(20px, env(safe-area-inset-bottom));
+        right: max(20px, env(safe-area-inset-right));
+    }
 }

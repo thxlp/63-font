@@ -204,6 +204,72 @@ body {
     margin-top: 4px;
 }
 
+/* --- Meal Selector --- */
+.meal-selector {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(109, 33, 33, 0.1);
+}
+
+.meal-selector-label {
+    font-size: 10px;
+    color: #8D5E5E;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.meal-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.meal-btn {
+    flex: 1;
+    min-width: 60px;
+    padding: 6px 8px;
+    border: 1.5px solid rgba(109, 33, 33, 0.3);
+    border-radius: 6px;
+    background: white;
+    color: #6D2121;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.meal-btn:hover {
+    border-color: #6D2121;
+    background: rgba(109, 33, 33, 0.05);
+    transform: translateY(-1px);
+}
+
+.meal-btn-selected {
+    background: #6D2121;
+    color: white;
+    border-color: #6D2121;
+    box-shadow: 0 2px 4px rgba(109, 33, 33, 0.3);
+}
+
+.meal-btn-selected:hover {
+    background: #5a1a1a;
+    border-color: #5a1a1a;
+}
+
+.meal-icon {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.meal-label {
+    font-size: 9px;
+    line-height: 1;
+}
+
 .cart-item-badge {
     display: inline-block;
     padding: 2px 6px;
@@ -341,6 +407,104 @@ body {
 .summary-unit {
     font-size: 12px;
     color: #8D5E5E;
+}
+
+/* --- Meals Section (3 มื้อ) --- */
+.meals-section {
+    margin-bottom: 15px;
+    padding: 12px;
+    background: rgba(109, 33, 33, 0.05);
+    border-radius: 10px;
+}
+
+.meals-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #6D2121;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.meals-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.meal-item {
+    background: white;
+    border-radius: 8px;
+    padding: 10px 8px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.meal-label {
+    font-size: 10px;
+    color: #8D5E5E;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.meal-icon-small {
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.meal-calories {
+    font-size: 16px;
+    font-weight: 700;
+    color: #6D2121;
+}
+
+.meal-calories-unit {
+    font-size: 9px;
+    color: #8D5E5E;
+    margin-left: 2px;
+}
+
+.meal-item-empty {
+    opacity: 0.5;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.meal-item-empty .meal-calories {
+    color: #8D5E5E;
+    font-size: 14px;
+}
+
+/* --- Calorie Warning --- */
+.calorie-warning {
+    margin-bottom: 15px;
+    padding: 12px;
+    background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+    border: 2px solid #ffc107;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(255, 193, 7, 0);
+    }
+}
+
+.warning-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.warning-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #856404;
+    line-height: 1.4;
 }
 
 /* --- Cart Actions --- */

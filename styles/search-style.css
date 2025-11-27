@@ -520,25 +520,65 @@ body {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
+    margin-top: 10px;
 }
 
 .nutrition-item {
     background: #f8f9fa;
-    padding: 12px;
+    padding: 12px 8px;
     border-radius: 8px;
     text-align: center;
+    border: 1px solid #e9ecef;
 }
 
 .nutrition-label {
     font-size: 0.75em;
     color: #666;
     margin-bottom: 5px;
+    font-weight: 500;
 }
 
 .nutrition-value {
-    font-size: 1.2em;
+    font-size: 1.1em;
     font-weight: bold;
-    color: #333;
+    color: #6D2121;
+}
+
+.nutrition-widget-container {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 10px;
+    overflow-x: auto;
+}
+
+.nutrition-widget-container table {
+    width: 100%;
+    font-size: 0.85em;
+}
+
+.ingredients-list {
+    padding-left: 20px;
+    margin-top: 10px;
+    list-style-type: disc;
+}
+
+.ingredients-list li {
+    margin-bottom: 8px;
+    font-size: 0.9em;
+    color: #555;
+    line-height: 1.6;
+}
+
+.instructions-text {
+    margin-top: 10px;
+    white-space: pre-line;
+    font-size: 0.9em;
+    color: #555;
+    line-height: 1.8;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
 }
 
 .tags {
@@ -611,12 +651,117 @@ body {
         font-size: 0.85em;
     }
     
+    .product-buttons {
+        gap: 6px;
+        margin-top: 8px;
+    }
+    
+    .btn-nutrition,
+    .btn-add-to-cart {
+        padding: 8px 6px;
+        font-size: 11px;
+        gap: 4px;
+    }
+    
+    .btn-nutrition svg,
+    .btn-add-to-cart svg {
+        width: 12px;
+        height: 12px;
+    }
+    
     .detail-title {
         font-size: 1.1em;
     }
     
+    .product-detail {
+        padding: 15px;
+        margin-top: 15px;
+    }
+    
+    .detail-header {
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .detail-image {
+        width: 100%;
+    }
+    
+    .detail-image img {
+        width: 100%;
+        max-height: 200px;
+    }
+    
+    .detail-info {
+        width: 100%;
+    }
+    
+    .detail-title {
+        font-size: 1.1em;
+        margin-bottom: 8px;
+    }
+    
+    .detail-info p {
+        font-size: 0.85em;
+        margin-bottom: 6px;
+    }
+    
+    .detail-info .btn-add-to-cart {
+        width: 100%;
+        margin-top: 10px;
+        padding: 12px;
+        font-size: 13px;
+    }
+    
+    .btn-close-detail {
+        padding: 12px;
+        font-size: 12px;
+        margin-bottom: 12px;
+    }
+    
     .nutrition-grid {
         grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .nutrition-item {
+        padding: 10px 6px;
+    }
+    
+    .nutrition-label {
+        font-size: 0.7em;
+    }
+    
+    .nutrition-value {
+        font-size: 1em;
+    }
+    
+    .detail-section {
+        margin-bottom: 15px;
+    }
+    
+    .detail-section h3 {
+        font-size: 0.95em;
+    }
+    
+    .ingredients-list {
+        padding-left: 18px;
+    }
+    
+    .ingredients-list li {
+        font-size: 0.85em;
+        margin-bottom: 6px;
+    }
+    
+    .instructions-text {
+        font-size: 0.85em;
+        padding: 12px;
+    }
+    
+    .nutrition-widget-container {
+        padding: 12px;
+        font-size: 0.8em;
     }
     
     .fab-cart {
@@ -778,6 +923,46 @@ body {
 
 .btn-add-to-cart.added:hover {
     background-color: #008a45;
+}
+
+/* --- Product Buttons Container --- */
+.product-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+/* --- Nutrition Button --- */
+.btn-nutrition {
+    width: 100%;
+    padding: 10px 8px;
+    border: none;
+    border-radius: 10px;
+    background-color: #667eea;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.btn-nutrition:hover {
+    background-color: #5568d3;
+}
+
+.btn-nutrition:active {
+    transform: scale(0.98);
+}
+
+.btn-add-to-cart {
+    width: 100%;
+    margin-top: 8px;
 }
 
 /* --- Cart Badge --- */

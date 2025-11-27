@@ -40,7 +40,7 @@ form.addEventListener('submit', async (e) => {
     // Redirect to BMI calculator page
     showMessage('บันทึกข้อมูลแล้ว กำลังเปลี่ยนหน้า...', 'success');
     setTimeout(() => {
-        window.location.href = 'regis-bmi.html';
+        window.location.href = '../pages/bmi-calculator.html';
     }, 1500);
 });
 

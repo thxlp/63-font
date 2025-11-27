@@ -65,7 +65,7 @@ async function submitBMI() {
     if (!registerDataStr) {
         showMessage('ไม่พบข้อมูลการสมัครสมาชิก กรุณาสมัครสมาชิกใหม่', 'error');
         setTimeout(() => {
-            window.location.href = 'register.html';
+            window.location.href = '../pages/register.html';
         }, 2000);
         return;
     }
@@ -189,7 +189,7 @@ async function submitBMI() {
             showMessage('บันทึกข้อมูลสำเร็จ! กำลังเปลี่ยนหน้า...', 'success');
             // Redirect to main page after 2 seconds
             setTimeout(() => {
-                window.location.href = 'main.html';
+                window.location.href = '../pages/main.html';
             }, 2000);
         } else {
             // Error from server

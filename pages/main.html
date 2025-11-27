@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Menu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles/main-style.css">
+</head>
+<body>
+
+    <div class="background-scene">
+        <div class="leaf-float" style="top: 8%; left: 15%;"></div>
+        <div class="leaf-float" style="top: 5%; right: 25%; transform: rotate(90deg);"></div>
+        <div class="leaf-float" style="bottom: 40%; left: -10px; opacity: 0.6;"></div>
+        <div class="leaf-float" style="bottom: 30%; right: 5%; transform: rotate(45deg);"></div>
+        
+        <div class="mountain m-1"></div>
+        <div class="mountain m-2"></div>
+        <div class="mountain m-3"></div>
+    </div>
+
+    <div class="app-container">
+        
+        <nav class="top-nav">
+            <a href="main.html" class="nav-item active">Main</a>
+            <a href="profile.html" class="nav-item">Profile</a>
+        </nav>
+
+        <div class="card-glass top-card">
+            <h3 class="section-title">🔍 ค้นหาสิ่งที่คุณต้องการ</h3>
+
+            <div class="search-section">
+                <div class="search-item">
+                    <div class="search-icon-wrapper">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6D2121" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                            <path d="M2 17l10 5 10-5"></path>
+                            <path d="M2 12l10 5 10-5"></path>
+                        </svg>
+                    </div>
+                    <div class="search-bar-wrapper">
+                        <input type="text" id="searchInput" placeholder="ค้นหาผลิตภัณฑ์อาหาร" onkeypress="if(event.key === 'Enter') performSearch()">
+                        <button class="search-icon-btn" onclick="performSearch()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6D2121" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="search-item">
+                    <div class="search-icon-wrapper">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                        </svg>
+                    </div>
+                    <div class="search-bar-wrapper">
+                        <input type="text" id="recipeSearchInput" placeholder="ค้นหาวิธีทำอาหาร กรุณาค้นหาเป็นภาษาอังกฤษ" onkeypress="if(event.key === 'Enter') performRecipeSearch()">
+                        <button class="search-icon-btn" onclick="performRecipeSearch()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-glass bottom-card">
+            <div class="upload-header">
+                
+                <h3 class="section-title center-text">📷 สแกนบาร์โค้ด</h3>
+                <p class="upload-subtitle">อัปโหลดรูปภาพบาร์โค้ดเพื่อค้นหาข้อมูลสินค้า</p>
+            </div>
+
+            <div class="button-group">
+                <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+                <button class="action-btn" onclick="document.getElementById('fileInput').click()">
+                    <div class="icon-wrapper">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#6D2121" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        <div class="upload-arrow">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="19" x2="12" y2="5"></line>
+                                <polyline points="5 12 12 5 19 12"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                    <span class="btn-text">แตะเพื่อเลือกรูปภาพ</span>
+                    <span class="btn-hint">รองรับไฟล์ JPG, PNG</span>
+                </button>
+            </div>
+
+            <!-- Preview Section -->
+            <div id="previewSection" class="preview-section" style="display: none;">
+                <div class="preview-header">
+                    <h4>📸 รูปภาพที่เลือก</h4>
+                </div>
+                <div class="preview-image-wrapper">
+                    <img id="imagePreview" class="preview-image" alt="Preview">
+                </div>
+                <div class="preview-actions">
+                    <button class="btn-confirm" onclick="confirmUpload()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span>ยืนยัน</span>
+                    </button>
+                    <button class="btn-cancel" onclick="resetUpload()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                        <span>ยกเลิก</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <div id="loading" class="loading-section" style="display: none;">
+                <div class="spinner"></div>
+                <p class="loading-text">กำลังสแกนบาร์โค้ดและค้นหาข้อมูลสินค้า...</p>
+            </div>
+
+            <!-- Error Message -->
+            <div id="error" class="error-message" style="display: none;"></div>
+        </div>
+
+    </div>
+
+    <!-- Floating Cart Button -->
+    <a href="cart.html" class="fab-cart">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+        </svg>
+        <span class="fab-badge" id="fabBadge" style="display: none;">0</span>
+    </a>
+
+    <script src="../scripts/cart.js"></script>
+    <script>
+        const DEFAULT_API_ORIGIN = 'http://localhost:3002';
+        const REQUEST_TIMEOUT = 60000; // 60 วินาที
+        const MAX_RETRIES = 3; // จำนวนครั้งที่ลองใหม่สูงสุด
+        const INITIAL_RETRY_DELAY = 2000; // เริ่มต้น delay 2 วินาที
+        const isSameOriginApi = window.location.origin && window.location.origin !== 'null' && window.location.port === '3002';
+        const apiOrigin = isSameOriginApi ? window.location.origin : DEFAULT_API_ORIGIN;
+        const API_BASE_URL = `${apiOrigin}/api/barcode`;
+
+        let selectedFile = null;
+
+        // ฟังก์ชันคำนวณ delay สำหรับ retry (exponential backoff)
+        function getRetryDelay(retryCount) {
+            // Exponential backoff: 2s, 4s, 8s
+            return INITIAL_RETRY_DELAY * Math.pow(2, retryCount);
+        }
+
+        function performSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const query = searchInput.value.trim();
+            
+            if (query) {
+                window.location.href = `search.html?q=${encodeURIComponent(query)}`;
+            } else {
+                window.location.href = 'search.html';
+            }
+        }
+
+        function performRecipeSearch() {
+            const recipeSearchInput = document.getElementById('recipeSearchInput');
+            const query = recipeSearchInput.value.trim();
+            
+            if (query) {
+                window.location.href = `recipe-results.html?q=${encodeURIComponent(query)}`;
+            } else {
+                window.location.href = 'recipe-results.html';
+            }
+        }
+
+        // File Select
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+                return;
+            }
+
+            selectedFile = file;
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                document.getElementById('imagePreview').src = e.target.result;
+                document.getElementById('previewSection').style.display = 'block';
+            };
+            
+            reader.readAsDataURL(file);
+            hideError();
+        }
+
+        // Confirm Upload and Scan
+        async function confirmUpload() {
+            if (!selectedFile) {
+                showError('กรุณาเลือกไฟล์รูปภาพ');
+                return;
+            }
+
+            showLoading(true);
+            hideError();
+
+            const formData = new FormData();
+            formData.append('image', selectedFile);
+
+            try {
+                const data = await fetchJson(`${API_BASE_URL}/scan`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (data.success) {
+                    // เก็บข้อมูลไว้ใน localStorage เพื่อส่งไปหน้า result
+                    const resultData = {
+                        barcode: data.barcode,
+                        product: data.product,
+                        imageData: document.getElementById('imagePreview').src
+                    };
+                    localStorage.setItem('scanResult', JSON.stringify(resultData));
+                    
+                    // ไปที่หน้า result
+                    window.location.href = 'result.html';
+                }
+            } catch (error) {
+                let errorMessage = error.message;
+                
+                // จัดการ timeout error
+                if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
+                    errorMessage = 'API timeout - ระบบได้ลองเชื่อมต่อหลายครั้งแล้วแต่ไม่สำเร็จ\n\nคำแนะนำ:\n1. ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต\n2. API อาจกำลังใช้งานหนัก กรุณารอสักครู่แล้วลองใหม่\n3. ลองอัปโหลดรูปภาพอีกครั้ง';
+                } else if (error.message.includes('ไม่สามารถเชื่อมต่อ')) {
+                    errorMessage += '\n\nวิธีแก้ไข:\n1. ตรวจสอบว่า Server รันอยู่ที่ port 3002\n2. รันคำสั่ง: npm start หรือ npm run dev';
+                }
+                
+                if (error.details) {
+                    errorMessage = errorMessage + '\nรายละเอียด: ' + error.details;
+                }
+                showError('เกิดข้อผิดพลาด: ' + errorMessage);
+                console.error('Scan error:', error);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Reset Upload
+        function resetUpload() {
+            selectedFile = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('previewSection').style.display = 'none';
+            hideError();
+        }
+
+        // Helper functions
+        async function fetchJson(url, options = {}, retryCount = 0) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+            
+            let response;
+            try {
+                response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+            } catch (fetchError) {
+                clearTimeout(timeoutId);
+                
+                // จัดการ timeout error
+                if (fetchError.name === 'AbortError' || fetchError.message.includes('timeout')) {
+                    // ลองใหม่ถ้ายังไม่เกินจำนวนครั้งที่กำหนด
+                    if (retryCount < MAX_RETRIES) {
+                        const delay = getRetryDelay(retryCount);
+                        console.log(`⏱️ Timeout - ลองใหม่อีกครั้ง (${retryCount + 1}/${MAX_RETRIES}) ใน ${delay/1000} วินาที...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return fetchJson(url, options, retryCount + 1);
+                    }
+                    throw new Error('API timeout - กรุณาลองใหม่อีกครั้ง');
+                }
+                
+                if (fetchError.message.includes('Failed to fetch') || fetchError.message.includes('NetworkError')) {
+                    // ลอง retry สำหรับ network error ด้วย
+                    if (retryCount < MAX_RETRIES) {
+                        const delay = getRetryDelay(retryCount);
+                        console.log(`🌐 Network Error - ลองใหม่อีกครั้ง (${retryCount + 1}/${MAX_RETRIES}) ใน ${delay/1000} วินาที...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return fetchJson(url, options, retryCount + 1);
+                    }
+                    throw new Error(`ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ (${apiOrigin}). กรุณาตรวจสอบว่า Server รันอยู่ที่ port 3002 หรือไม่`);
+                }
+                throw fetchError;
+            }
+            
+            const contentType = response.headers.get('content-type') || '';
+            const text = await response.text();
+            
+            if (!response.ok) {
+                let message = text;
+                let details = null;
+                try {
+                    if (contentType.includes('application/json') || text.trim().startsWith('{') || text.trim().startsWith('[')) {
+                        const parsed = JSON.parse(text);
+                        message = parsed.error || parsed.message || message;
+                        details = parsed.details || null;
+                    }
+                } catch (err) {
+                    if (text.length > 200) {
+                        message = text.substring(0, 200) + '...';
+                    }
+                }
+                
+                const errorMsg = message || `HTTP ${response.status}`;
+                const isTimeoutError = errorMsg.toLowerCase().includes('timeout') || 
+                                     errorMsg.toLowerCase().includes('timed out') ||
+                                     response.status === 504 || // Gateway Timeout
+                                     response.status === 408;   // Request Timeout
+                
+                // สำหรับ timeout error หรือ server error (500, 502, 503) ให้ลอง retry
+                if ((isTimeoutError || response.status >= 500) && retryCount < MAX_RETRIES) {
+                    const delay = getRetryDelay(retryCount);
+                    console.log(`⚠️ Server Error (${response.status}) - ลองใหม่อีกครั้ง (${retryCount + 1}/${MAX_RETRIES}) ใน ${delay/1000} วินาที...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchJson(url, options, retryCount + 1);
+                }
+                
+                const error = new Error(errorMsg);
+                if (details) error.details = details;
+                throw error;
+            }
+
+            if (!contentType.includes('application/json')) {
+                const trimmedText = text.trim();
+                if (!trimmedText.startsWith('{') && !trimmedText.startsWith('[')) {
+                    throw new Error('เซิร์ฟเวอร์ตอบกลับไม่ใช่ JSON โปรดตรวจสอบว่า backend รันอยู่ที่ ' + apiOrigin);
+                }
+            }
+
+            try {
+                return JSON.parse(text);
+            } catch (parseError) {
+                if (text.includes('------WebKit') || text.includes('multipart')) {
+                    throw new Error('เกิดข้อผิดพลาด: เซิร์ฟเวอร์ตอบกลับเป็น multipart/form-data แทน JSON');
+                }
+                throw new Error('ไม่สามารถแปลง response เป็น JSON ได้: ' + parseError.message);
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.innerHTML = message.replace(/\n/g, '<br>');
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+        
+        // อัปเดต badge เมื่อโหลดหน้า
+        window.addEventListener('DOMContentLoaded', () => {
+            updateCartBadge();
+        });
+    </script>
+
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Preview Section */
+        .preview-section {
+            margin-top: 16px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(109, 33, 33, 0.1);
+        }
+        
+        .preview-header {
+            margin-bottom: 12px;
+        }
+        
+        .preview-header h4 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #6D2121;
+            margin: 0;
+        }
+        
+        .preview-image-wrapper {
+            text-align: center;
+            margin-bottom: 16px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 12px;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            object-fit: contain;
+        }
+        
+        .preview-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-confirm, .btn-cancel {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-confirm {
+            background: linear-gradient(135deg, #6D2121 0%, #8B0000 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(109, 33, 33, 0.3);
+        }
+        
+        .btn-confirm:hover {
+            box-shadow: 0 6px 16px rgba(109, 33, 33, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+
+        .btn-confirm:active, .btn-cancel:active {
+            transform: scale(0.98);
+        }
+        
+        /* Loading Section */
+        .loading-section {
+            text-align: center;
+            padding: 24px 20px;
+            margin-top: 16px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6D2121;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        .loading-text {
+            color: #6D2121;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        /* Error Message */
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 16px;
+            border: 2px solid #fcc;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+    </style>
+</body>
+</html>

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Page</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/search-style.css">
+    <link rel="stylesheet" href="../styles/search-style.css">
 </head>
 <body>
 
@@ -24,7 +24,6 @@
         <nav class="top-nav">
             <a href="main.html" class="nav-item">Main</a>
             <a href="profile.html" class="nav-item">Profile</a>
-            <a href="history.html" class="nav-item">ประวัติ</a>
         </nav>
 
         <div class="card-glass full-card" id="searchCard">
@@ -71,11 +70,12 @@
         <span class="fab-badge" id="fabBadge" style="display: none;">0</span>
     </a>
 
-    <script src="/cart.js"></script>
+    <script src="../scripts/cart.js"></script>
     <script>
         const DEFAULT_API_ORIGIN = 'http://localhost:3002';
-        const REQUEST_TIMEOUT = 30000; // 30 วินาที
-        const MAX_RETRIES = 2; // จำนวนครั้งที่ลองใหม่สูงสุด
+        const REQUEST_TIMEOUT = 60000; // เพิ่มเป็น 60 วินาที
+        const MAX_RETRIES = 3; // เพิ่มจำนวน retry เป็น 3 ครั้ง
+        const INITIAL_RETRY_DELAY = 2000; // เริ่มต้น delay 2 วินาที
         let currentProductDetail = null; // เก็บข้อมูลสินค้าปัจจุบันที่แสดง
         const isSameOriginApi =
             window.location.origin &&
@@ -83,6 +83,12 @@
             window.location.port === '3002';
         const apiOrigin = isSameOriginApi ? window.location.origin : DEFAULT_API_ORIGIN;
         const API_BASE_URL = `${apiOrigin}/api/openfoodfacts`;
+
+        // ฟังก์ชันคำนวณ delay สำหรับ retry (exponential backoff)
+        function getRetryDelay(retryCount) {
+            // Exponential backoff: 2s, 4s, 8s
+            return INITIAL_RETRY_DELAY * Math.pow(2, retryCount);
+        }
 
         async function fetchJson(url, options = {}, retryCount = 0) {
             const controller = new AbortController();
@@ -102,14 +108,27 @@
                 if (fetchError.name === 'AbortError' || fetchError.message.includes('timeout')) {
                     // ลองใหม่ถ้ายังไม่เกินจำนวนครั้งที่กำหนด
                     if (retryCount < MAX_RETRIES) {
-                        console.log(`⏱️ Timeout - ลองใหม่อีกครั้ง (${retryCount + 1}/${MAX_RETRIES})...`);
-                        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // เพิ่ม delay ตามจำนวนครั้งที่ลอง
+                        const delay = getRetryDelay(retryCount);
+                        console.log(`⏱️ Timeout - ลองใหม่อีกครั้ง (${retryCount + 1}/${MAX_RETRIES}) ใน ${delay/1000} วินาที...`);
+                        
+                        // แสดงสถานะ retry ให้ผู้ใช้เห็น
+                        updateLoadingMessage(`กำลังลองใหม่อีกครั้ง (${retryCount + 1}/${MAX_RETRIES})...`);
+                        
+                        await new Promise(resolve => setTimeout(resolve, delay));
                         return fetchJson(url, options, retryCount + 1);
                     }
                     throw new Error('OpenFoodFacts API timeout - กรุณาลองใหม่อีกครั้ง');
                 }
                 
                 if (fetchError.message.includes('Failed to fetch') || fetchError.message.includes('NetworkError')) {
+                    // ลอง retry สำหรับ network error ด้วย
+                    if (retryCount < MAX_RETRIES) {
+                        const delay = getRetryDelay(retryCount);
+                        console.log(`🌐 Network Error - ลองใหม่อีกครั้ง (${retryCount + 1}/${MAX_RETRIES}) ใน ${delay/1000} วินาที...`);
+                        updateLoadingMessage(`กำลังลองเชื่อมต่ออีกครั้ง (${retryCount + 1}/${MAX_RETRIES})...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return fetchJson(url, options, retryCount + 1);
+                    }
                     throw new Error(`ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ (${apiOrigin}). กรุณาตรวจสอบว่า Server รันอยู่ที่ port 3002 หรือไม่`);
                 }
                 throw fetchError;
@@ -132,17 +151,38 @@
                 
                 // ตรวจสอบว่า error message มีคำว่า timeout หรือไม่
                 const errorMsg = message || `HTTP ${response.status}`;
-                if (errorMsg.toLowerCase().includes('timeout')) {
+                const isTimeoutError = errorMsg.toLowerCase().includes('timeout') || 
+                                     errorMsg.toLowerCase().includes('timed out') ||
+                                     response.status === 504 || // Gateway Timeout
+                                     response.status === 408;   // Request Timeout
+                
+                if (isTimeoutError) {
                     // ถ้ายังไม่เกินจำนวนครั้งที่กำหนด ให้ลองใหม่
                     if (retryCount < MAX_RETRIES) {
-                        console.log(`⏱️ API Timeout - ลองใหม่อีกครั้ง (${retryCount + 1}/${MAX_RETRIES})...`);
-                        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+                        const delay = getRetryDelay(retryCount);
+                        console.log(`⏱️ API Timeout (${response.status}) - ลองใหม่อีกครั้ง (${retryCount + 1}/${MAX_RETRIES}) ใน ${delay/1000} วินาที...`);
+                        updateLoadingMessage(`กำลังลองใหม่อีกครั้ง (${retryCount + 1}/${MAX_RETRIES})...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
                         return fetchJson(url, options, retryCount + 1);
                     }
                     throw new Error('OpenFoodFacts API timeout - กรุณาลองใหม่อีกครั้ง');
                 }
                 
+                // สำหรับ server error อื่นๆ (500, 502, 503) ก็ลอง retry
+                if (response.status >= 500 && retryCount < MAX_RETRIES) {
+                    const delay = getRetryDelay(retryCount);
+                    console.log(`⚠️ Server Error (${response.status}) - ลองใหม่อีกครั้ง (${retryCount + 1}/${MAX_RETRIES}) ใน ${delay/1000} วินาที...`);
+                    updateLoadingMessage(`กำลังลองใหม่อีกครั้ง (${retryCount + 1}/${MAX_RETRIES})...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchJson(url, options, retryCount + 1);
+                }
+                
                 throw new Error(errorMsg);
+            }
+
+            // รีเซ็ต loading message เมื่อสำเร็จ
+            if (retryCount === 0) {
+                updateLoadingMessage('กำลังค้นหา...');
             }
 
             if (!contentType.includes('application/json')) {
@@ -159,6 +199,14 @@
                     throw new Error('เกิดข้อผิดพลาด: เซิร์ฟเวอร์ตอบกลับเป็น multipart/form-data แทน JSON โปรดตรวจสอบการตั้งค่า backend');
                 }
                 throw new Error('ไม่สามารถแปลง response เป็น JSON ได้: ' + parseError.message);
+            }
+        }
+
+        // ฟังก์ชันอัปเดตข้อความ loading
+        function updateLoadingMessage(message) {
+            const loadingText = document.querySelector('.loading-text-small');
+            if (loadingText) {
+                loadingText.textContent = message;
             }
         }
 
@@ -194,7 +242,7 @@
                 
                 // จัดการ timeout error
                 if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
-                    errorMessage = 'OpenFoodFacts API timeout - กรุณาลองใหม่อีกครั้ง\n\nคำแนะนำ:\n1. ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต\n2. OpenFoodFacts API อาจกำลังใช้งานหนัก กรุณารอสักครู่แล้วลองใหม่\n3. ลองค้นหาด้วยคำอื่นที่สั้นกว่า';
+                    errorMessage = 'OpenFoodFacts API timeout - ระบบได้ลองเชื่อมต่อหลายครั้งแล้วแต่ไม่สำเร็จ\n\nคำแนะนำ:\n1. ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต\n2. OpenFoodFacts API อาจกำลังใช้งานหนัก กรุณารอสักครู่แล้วลองใหม่\n3. ลองค้นหาด้วยคำอื่นที่สั้นกว่า\n4. ลองรีเฟรชหน้าเว็บแล้วค้นหาใหม่';
                 } else if (error.message.includes('ไม่สามารถเชื่อมต่อ')) {
                     errorMessage += '\n\nวิธีแก้ไข:\n1. ตรวจสอบว่า Server รันอยู่ที่ port 3002\n2. รันคำสั่ง: npm start หรือ npm run dev\n3. ตรวจสอบ console log ว่า server เริ่มทำงานแล้ว';
                 }
@@ -204,6 +252,7 @@
             } finally {
                 // ซ่อนสถานะกำลังค้นหาเมื่อเสร็จ
                 showLoadingIndicator(false);
+                updateLoadingMessage('กำลังค้นหา...'); // รีเซ็ตข้อความ
             }
         }
         
@@ -223,20 +272,23 @@
             try {
                 const data = await fetchJson(`${API_BASE_URL}/product/${barcode}`);
                 displayProductDetail(data.product);
+                return Promise.resolve();
             } catch (error) {
                 let errorMessage = error.message;
                 
                 // จัดการ timeout error
                 if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
-                    errorMessage = 'OpenFoodFacts API timeout - กรุณาลองใหม่อีกครั้ง\n\nคำแนะนำ:\n1. ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต\n2. OpenFoodFacts API อาจกำลังใช้งานหนัก กรุณารอสักครู่แล้วลองใหม่\n3. ลองเปิดรายละเอียดสินค้าอีกครั้ง';
+                    errorMessage = 'OpenFoodFacts API timeout - ระบบได้ลองเชื่อมต่อหลายครั้งแล้วแต่ไม่สำเร็จ\n\nคำแนะนำ:\n1. ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต\n2. OpenFoodFacts API อาจกำลังใช้งานหนัก กรุณารอสักครู่แล้วลองใหม่\n3. ลองเปิดรายละเอียดสินค้าอีกครั้ง';
                 } else if (error.message.includes('ไม่สามารถเชื่อมต่อ')) {
                     errorMessage += '\n\nวิธีแก้ไข:\n1. ตรวจสอบว่า Server รันอยู่ที่ port 3002\n2. รันคำสั่ง: npm start หรือ npm run dev';
                 }
                 
                 showError('เกิดข้อผิดพลาด: ' + errorMessage);
                 console.error('Product detail error:', error);
+                return Promise.reject(error);
             } finally {
                 showLoadingIndicator(false);
+                updateLoadingMessage('กำลังค้นหา...'); // รีเซ็ตข้อความ
             }
         }
 
@@ -263,11 +315,26 @@
             products.forEach(product => {
                 const card = document.createElement('div');
                 card.className = 'product-card';
+                card.setAttribute('data-product-id', product.id);
                 card.onclick = () => getProductDetail(product.id);
 
                 const imageUrl = product.image_url || 'https://via.placeholder.com/200?text=No+Image';
                 const nutriscore = product.nutriscore_grade ? 
                     `<span class="product-badge nutriscore-${product.nutriscore_grade.toLowerCase()}">Nutri-Score: ${product.nutriscore_grade.toUpperCase()}</span>` : '';
+
+                // ตรวจสอบว่าสินค้าอยู่ในตะกร้าหรือไม่
+                const isInCartProduct = isInCart(product.id);
+                const addToCartBtnClass = isInCartProduct ? 'btn-add-to-cart added' : 'btn-add-to-cart';
+                const addToCartBtnText = isInCartProduct ? 
+                    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>เพิ่มแล้ว</span>` :
+                    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>เพิ่มลงตะกร้า</span>`;
 
                 card.innerHTML = `
                     <img src="${imageUrl}" alt="${product.name}" class="product-image" onerror="this.src='https://via.placeholder.com/200?text=No+Image'">
@@ -275,6 +342,17 @@
                         <div class="product-name">${product.name}</div>
                         ${product.brand ? `<div class="product-brand">${product.brand}</div>` : ''}
                         ${nutriscore}
+                        <div class="product-buttons">
+                            <button class="btn-nutrition" onclick="event.stopPropagation(); getProductDetail('${product.id}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                </svg>
+                                <span>โภชนาการ</span>
+                            </button>
+                            <button class="${addToCartBtnClass}" onclick="event.stopPropagation(); handleAddToCartFromList('${product.id}')" data-product-id="${product.id}">
+                                ${addToCartBtnText}
+                            </button>
+                        </div>
                     </div>
                 `;
 
@@ -386,6 +464,51 @@
             currentProductDetail = null; // ล้างข้อมูลสินค้าปัจจุบัน
         }
         
+        // ฟังก์ชันจัดการการเพิ่มสินค้าลงตะกร้าจากรายการ
+        async function handleAddToCartFromList(productId) {
+            // ตรวจสอบว่ามีข้อมูลสินค้าในรายการหรือไม่
+            const products = document.querySelectorAll('.product-card');
+            let productData = null;
+            
+            // หาข้อมูลสินค้าจากรายการที่แสดงอยู่
+            for (const card of products) {
+                const cardProductId = card.getAttribute('data-product-id');
+                if (cardProductId === productId) {
+                    // ถ้ามีข้อมูลในรายการแล้ว ให้ใช้ข้อมูลนั้น
+                    // แต่เราต้องดึงข้อมูลเต็มจาก API เพื่อให้ได้ข้อมูลโภชนาการ
+                    break;
+                }
+            }
+            
+            // ดึงข้อมูลสินค้าจาก API
+            try {
+                await getProductDetail(productId);
+                
+                if (currentProductDetail && currentProductDetail.id === productId) {
+                    const added = addToCart(currentProductDetail);
+                    const buttons = document.querySelectorAll(`button[data-product-id="${productId}"]`);
+                    
+                    if (added) {
+                        showNotification('เพิ่มสินค้าลงตะกร้าแล้ว');
+                        buttons.forEach(button => {
+                            button.classList.add('added');
+                            button.innerHTML = `
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span>เพิ่มแล้ว</span>
+                            `;
+                        });
+                    } else {
+                        showNotification('สินค้านี้อยู่ในตะกร้าแล้ว');
+                    }
+                }
+            } catch (error) {
+                showNotification('ไม่สามารถเพิ่มสินค้าลงตะกร้าได้ กรุณาลองอีกครั้ง');
+                console.error('Add to cart error:', error);
+            }
+        }
+        
         // ฟังก์ชันจัดการการเพิ่มสินค้าลงตะกร้า
         function handleAddToCart(productId, buttonElement) {
             if (!currentProductDetail || currentProductDetail.id !== productId) {
@@ -395,9 +518,19 @@
             }
             
             const added = addToCart(currentProductDetail);
+            const buttons = document.querySelectorAll(`button[data-product-id="${productId}"]`);
+            
             if (added) {
-                updateAddToCartButton(productId, buttonElement);
                 showNotification('เพิ่มสินค้าลงตะกร้าแล้ว');
+                buttons.forEach(button => {
+                    button.classList.add('added');
+                    button.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span>เพิ่มแล้ว</span>
+                    `;
+                });
             } else {
                 showNotification('สินค้านี้อยู่ในตะกร้าแล้ว');
             }

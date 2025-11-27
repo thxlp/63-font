@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ประวัติตะกร้า</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/cart-style.css">
+    <link rel="stylesheet" href="../styles/cart-style.css">
 </head>
 <body>
 
@@ -23,8 +23,9 @@
     <div class="app-container">
         
         <nav class="top-nav">
+            <a href="main.html" class="nav-item">Main</a>
             <a href="profile.html" class="nav-item">Profile</a>
-            <a href="history.html" class="nav-item active">ประวัติ</a>
+            <a href="history.html" class="nav-item active">History</a>
         </nav>
 
         <div class="card-glass cart-card">
@@ -53,86 +54,106 @@
         <span class="fab-badge" id="fabBadge" style="display: none;">0</span>
     </a>
 
-    <script src="/cart.js"></script>
+    <script src="../scripts/cart.js"></script>
     <script>
-        // แสดงประวัติตะกร้า
-        function displayHistory() {
-            const history = getCartHistory();
+        // แสดงประวัติตะกร้า (async)
+        async function displayHistory() {
             const historyContent = document.getElementById('historyContent');
             const historyEmpty = document.getElementById('historyEmpty');
             
-            if (history.length === 0) {
-                historyContent.innerHTML = '';
-                historyEmpty.classList.remove('hidden');
-            } else {
-                historyEmpty.classList.add('hidden');
+            // แสดง loading
+            historyContent.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">กำลังโหลดประวัติ...</div>';
+            
+            try {
+                // ดึงประวัติจาก API (มี fallback ไป localStorage)
+                const history = await getCartHistory(20, 0);
                 
-                historyContent.innerHTML = history.map(item => {
-                    const date = new Date(item.date);
-                    const dateStr = date.toLocaleDateString('th-TH', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
+                if (history.length === 0) {
+                    historyContent.innerHTML = '';
+                    historyEmpty.classList.remove('hidden');
+                } else {
+                    historyEmpty.classList.add('hidden');
                     
-                    return `
+                    historyContent.innerHTML = history.map(item => {
+                        const date = new Date(item.date);
+                        const dateStr = date.toLocaleDateString('th-TH', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        
+                        return `
                         <div class="history-item">
                             <div class="history-header">
                                 <div class="history-date">${dateStr}</div>
-                                <button class="btn-delete-history" onclick="deleteHistoryItem('${item.id}')">ลบ</button>
                             </div>
                             <div class="history-summary">
                                 <div class="history-summary-item">
                                     <span>จำนวนสินค้า:</span>
-                                    <strong>${item.summary.itemCount} รายการ</strong>
+                                        <strong>${item.summary ? item.summary.itemCount : (item.items ? item.items.length : 0)} รายการ</strong>
                                 </div>
                                 <div class="history-summary-item">
                                     <span>พลังงานรวม:</span>
-                                    <strong>${item.summary.totalEnergy} kcal</strong>
+                                        <strong>${item.summary ? item.summary.totalEnergy : (item.total_calories || '0')} kcal</strong>
                                 </div>
+                                    ${item.summary ? `
                                 <div class="history-summary-item">
                                     <span>ไขมัน:</span>
-                                    <strong>${item.summary.totalFat} g</strong>
+                                        <strong>${item.summary.totalFat || '0'} g</strong>
                                 </div>
                                 <div class="history-summary-item">
                                     <span>คาร์บ:</span>
-                                    <strong>${item.summary.totalCarbs} g</strong>
+                                        <strong>${item.summary.totalCarbs || '0'} g</strong>
                                 </div>
                                 <div class="history-summary-item">
                                     <span>โปรตีน:</span>
-                                    <strong>${item.summary.totalProtein} g</strong>
+                                        <strong>${item.summary.totalProtein || '0'} g</strong>
                                 </div>
+                                    ` : ''}
                             </div>
                             <div class="history-items">
-                                ${item.items.map(product => {
-                                    const imageUrl = product.image_url || 'https://via.placeholder.com/200?text=No+Image';
+                                    ${(item.items || []).map((product, productIndex) => {
                                     return `
                                         <div class="history-product-item">
-                                            <img src="${imageUrl}" alt="${product.name}" class="history-product-image" onerror="this.src='https://via.placeholder.com/200?text=No+Image'">
-                                            <div class="history-product-name">${product.name}</div>
+                                                <div class="history-product-name">${product.name || 'ไม่ระบุชื่อ'}</div>
                                         </div>
                                     `;
                                 }).join('')}
                             </div>
                         </div>
                     `;
-                }).join('');
+                    }).join('');
+                }
+            } catch (error) {
+                console.error('❌ Error แสดงประวัติ:', error);
+                historyContent.innerHTML = '<div style="text-align: center; padding: 20px; color: #c33;">เกิดข้อผิดพลาดในการโหลดประวัติ</div>';
             }
         }
         
         // ลบประวัติรายการ
-        function deleteHistoryItem(historyId) {
+        async function deleteHistoryItem(historyId) {
             if (confirm('คุณต้องการลบประวัติรายการนี้หรือไม่?')) {
-                deleteCartHistory(historyId);
-                displayHistory();
+                await deleteCartHistory(historyId);
+                await displayHistory();
+            }
+        }
+        
+        // ทำความสะอาดประวัติเก่า (เก็บแค่ 20 รายการล่าสุด)
+        function cleanupHistory() {
+            const history = getCartHistorySync();
+            if (history.length > 20) {
+                // เก็บแค่ 20 รายการล่าสุด
+                const cleanedHistory = history.slice(0, 20);
+                localStorage.setItem('cartHistory', JSON.stringify(cleanedHistory));
             }
         }
         
         // โหลดประวัติเมื่อเปิดหน้า
-        window.addEventListener('DOMContentLoaded', () => {
-            displayHistory();
+        window.addEventListener('DOMContentLoaded', async () => {
+            cleanupHistory(); // ทำความสะอาดประวัติเก่าก่อนแสดง
+            await displayHistory();
             updateCartBadge();
         });
     </script>
@@ -208,24 +229,17 @@
         .history-product-item {
             display: flex;
             align-items: center;
-            gap: 8px;
             background: #f8f9fa;
-            padding: 6px 10px;
+            padding: 8px 12px;
             border-radius: 8px;
             flex: 0 0 auto;
         }
         
-        .history-product-image {
-            width: 30px;
-            height: 30px;
-            object-fit: contain;
-            border-radius: 4px;
-        }
-        
         .history-product-name {
-            font-size: 11px;
+            font-size: 12px;
             color: #333;
-            max-width: 120px;
+            font-weight: 500;
+            max-width: 200px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -273,17 +287,12 @@
             }
             
             .history-product-item {
-                padding: 5px 8px;
-            }
-            
-            .history-product-image {
-                width: 25px;
-                height: 25px;
+                padding: 6px 10px;
             }
             
             .history-product-name {
-                font-size: 10px;
-                max-width: 100px;
+                font-size: 11px;
+                max-width: 150px;
             }
             
             .fab-cart {
@@ -315,7 +324,7 @@
             }
             
             .history-product-name {
-                max-width: 80px;
+                max-width: 120px;
             }
         }
         

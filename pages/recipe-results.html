@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ค้นหาวิธีทำอาหาร</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles/search-style.css">
+</head>
+<body>
+
+    <div class="background-scene">
+        <div class="leaf-float" style="top: 10%; left: 10%;"></div>
+        <div class="leaf-float" style="top: 20%; right: 10%; transform: rotate(90deg);"></div>
+        <div class="leaf-float" style="bottom: 40%; left: 5%; opacity: 0.5;"></div>
+        
+        <div class="mountain m-1"></div>
+        <div class="mountain m-2"></div>
+        <div class="mountain m-3"></div>
+    </div>
+
+    <div class="app-container">
+        
+        <nav class="top-nav">
+            <a href="main.html" class="nav-item">Main</a>
+            <a href="profile.html" class="nav-item">Profile</a>
+        </nav>
+
+        <div class="card-glass full-card" id="searchCard">
+
+            <h4 class="section-title">ค้นหาวิธีทำอาหาร</h4>
+            
+            <div class="card-top">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="ค้นหาวิธีทำอาหาร" onkeypress="if(event.key === 'Enter') searchRecipes()">
+                    <button class="search-icon" onclick="searchRecipes()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="loading-indicator" id="loadingIndicator" style="display: none;">
+                    <div class="spinner-small"></div>
+                    <span class="loading-text-small">กำลังค้นหา...</span>
+                </div>
+            </div>
+
+            <div class="card-body-spacer">
+                <div class="error" id="error" style="display: none;"></div>
+                <div class="products-container" id="recipesContainer"></div>
+                <div class="product-detail" id="recipeDetail"></div>
+            </div>
+
+            <div class="card-bottom">
+                <button class="btn-back" onclick="history.back()">ย้อนกลับ</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Floating Cart Button -->
+    <a href="cart.html" class="fab-cart">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+        </svg>
+        <span class="fab-badge" id="fabBadge" style="display: none;">0</span>
+    </a>
+
+    <script src="../scripts/cart.js"></script>
+    <script>
+        // ใช้ backend endpoint แทนการเรียก Spoonacular API โดยตรง
+        const BACKEND_API_BASE = 'http://localhost:3002/api';
+        
+        // เก็บข้อมูล recipe nutrition ไว้ในตัวแปร global
+        let recipeNutritionCache = {};
+
+        async function searchRecipes() {
+            const searchInput = document.getElementById('searchInput');
+            const query = searchInput.value.trim();
+            
+            if (!query) {
+                showError('กรุณาระบุคำค้นหา');
+                return;
+            }
+
+            // แสดงสถานะกำลังค้นหา
+            showLoadingIndicator(true);
+            hideError();
+            clearRecipes();
+            
+            // ยืด card เพื่อแสดงผลลัพธ์
+            expandCard();
+
+            try {
+                // เรียก backend endpoint แทน Spoonacular API โดยตรง
+                const url = `${BACKEND_API_BASE}/recipes/search?query=${encodeURIComponent(query)}&number=20`;
+                console.log('📤 กำลังค้นหาสูตรอาหาร:', url);
+                
+                const response = await fetch(url);
+                console.log('📥 Response status:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    // อ่าน response text ก่อน (เพื่อไม่ให้ response body ถูก consume)
+                    const responseText = await response.text();
+                    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    let backendError = '';
+                    
+                    // ลอง parse เป็น JSON
+                    try {
+                        const errorData = JSON.parse(responseText);
+                        backendError = errorData.error || errorData.message || errorData.error_message || '';
+                        console.error('❌ Error response (JSON):', errorData);
+                        if (backendError) {
+                            errorMessage = backendError;
+                        }
+                    } catch (e) {
+                        // ไม่ใช่ JSON - ใช้ text โดยตรง
+                        console.error('❌ Error response (text):', responseText);
+                        if (responseText) {
+                            backendError = responseText.substring(0, 200);
+                            errorMessage = backendError;
+                        }
+                    }
+                    
+                    // แสดง error message ที่เข้าใจง่ายตาม status code
+                    if (response.status === 400) {
+                        if (backendError.includes('Query') || backendError.includes('query') || backendError.includes('required')) {
+                            errorMessage = `ข้อมูลไม่ถูกต้อง: ${backendError}`;
+                        } else if (backendError) {
+                            errorMessage = `ข้อมูลไม่ถูกต้อง: ${backendError}`;
+                        } else {
+                            errorMessage = 'ข้อมูลไม่ถูกต้อง - กรุณาตรวจสอบว่า backend endpoint /api/recipes/search ทำงานอยู่และรับ parameter query';
+                        }
+                    } else if (response.status === 404) {
+                        errorMessage = 'ไม่พบ endpoint - กรุณาตรวจสอบว่า backend มี endpoint GET /api/recipes/search';
+                    } else if (response.status === 500) {
+                        errorMessage = backendError || 'เกิดข้อผิดพลาดในเซิร์ฟเวอร์ - กรุณาตรวจสอบ backend logs';
+                    } else if (response.status === 402) {
+                        errorMessage = backendError || 'Spoonacular API quota exceeded - กรุณาตรวจสอบ API key หรือ plan';
+                    }
+                    
+                    console.error('❌ Final error message:', errorMessage);
+                    throw new Error(errorMessage);
+                }
+                
+                const data = await response.json();
+                console.log('✅ ได้รับข้อมูล:', data);
+                
+                if (!data.results || data.results.length === 0) {
+                    const container = document.getElementById('recipesContainer');
+                    container.innerHTML = '<p style="text-align: center; padding: 40px; color: #666;">ไม่พบวิธีทำอาหาร</p>';
+                } else {
+                    displayRecipes(data.results);
+                }
+                
+            } catch (error) {
+                console.error('❌ Recipe search error:', error);
+                console.error('   Error message:', error.message);
+                console.error('   Error stack:', error.stack);
+                
+                // แสดง error message ที่เข้าใจง่าย
+                let errorMessage = error.message;
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ - กรุณาตรวจสอบว่า backend รันอยู่ที่ port 3002';
+                }
+                
+                showError(`เกิดข้อผิดพลาด: ${errorMessage}`);
+            } finally {
+                showLoadingIndicator(false);
+            }
+        }
+        
+        function expandCard() {
+            const card = document.getElementById('searchCard');
+            card.classList.add('expanded');
+        }
+        
+        function displayRecipes(recipes) {
+            const container = document.getElementById('recipesContainer');
+            container.innerHTML = '';
+
+            // แสดงจำนวนผลลัพธ์
+            const resultCount = document.createElement('div');
+            resultCount.className = 'result-count';
+            resultCount.textContent = `พบ ${recipes.length} รายการ`;
+            container.appendChild(resultCount);
+
+            // สร้าง grid container
+            const grid = document.createElement('div');
+            grid.className = 'products-grid';
+            container.appendChild(grid);
+
+            recipes.forEach(recipe => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                
+                const imageUrl = recipe.image || 'https://via.placeholder.com/200?text=No+Image';
+
+                // ตรวจสอบว่าอยู่ในตะกร้าหรือไม่
+                const isInCartRecipe = isInCart(`recipe-${recipe.id}`);
+                const addToCartBtnClass = isInCartRecipe ? 'btn-add-to-cart added' : 'btn-add-to-cart';
+                const addToCartBtnText = isInCartRecipe ? 
+                    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>เพิ่มแล้ว</span>` :
+                    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>เพิ่มลงตะกร้า</span>`;
+
+                card.innerHTML = `
+                    <img src="${imageUrl}" alt="${recipe.title}" class="product-image" onerror="this.src='https://via.placeholder.com/200?text=No+Image'">
+                    <div class="product-info">
+                        <div class="product-name">${recipe.title}</div>
+                        <button class="btn-nutrition" onclick="getRecipeNutrition(${recipe.id}, '${recipe.title.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', '${imageUrl.replace(/'/g, "\\'")}')">
+                            
+                            <span>รายละเอียด</span>
+                        </button>
+                        <button class="${addToCartBtnClass}" onclick="addRecipeToCartWithNutrition(${recipe.id}, '${recipe.title.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', '${imageUrl.replace(/'/g, "\\'")}')" data-recipe-id="recipe-${recipe.id}">
+                            ${addToCartBtnText}
+                        </button>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        async function getRecipeNutrition(recipeId, recipeTitle, recipeImage) {
+            showLoadingIndicator(true);
+            hideError();
+            
+            try {
+                // ดึงข้อมูลโภชนาการและข้อมูลสูตรอาหารผ่าน backend endpoint
+                const nutritionUrl = `${BACKEND_API_BASE}/recipes/${recipeId}/nutrition`;
+                const infoUrl = `${BACKEND_API_BASE}/recipes/${recipeId}/information`;
+                
+                const [nutritionResponse, infoResponse] = await Promise.all([
+                    fetch(nutritionUrl).catch(() => null),
+                    fetch(infoUrl).catch(() => null)
+                ]);
+                
+                let nutritionData = null;
+                let recipeInfo = null;
+                
+                if (nutritionResponse && nutritionResponse.ok) {
+                    const nutritionText = await nutritionResponse.text();
+                    nutritionData = nutritionText;
+                }
+                
+                if (infoResponse && infoResponse.ok) {
+                    recipeInfo = await infoResponse.json();
+                }
+                
+                displayRecipeDetail(recipeId, recipeTitle, recipeImage, nutritionData, recipeInfo);
+                
+            } catch (error) {
+                showError('ไม่สามารถดึงข้อมูลโภชนาการได้: ' + error.message);
+                console.error('Nutrition error:', error);
+            } finally {
+                showLoadingIndicator(false);
+            }
+        }
+        
+        function displayRecipeDetail(recipeId, recipeTitle, recipeImage, nutritionData, recipeInfo) {
+            const detailDiv = document.getElementById('recipeDetail');
+            detailDiv.className = 'product-detail active';
+            
+            // เก็บข้อมูลโภชนาการไว้ใน cache
+            if (recipeInfo && recipeInfo.nutrition && recipeInfo.nutrition.nutrients) {
+                const nutrients = recipeInfo.nutrition.nutrients;
+                recipeNutritionCache[recipeId] = {
+                    energy: nutrients.find(n => n.name === 'Calories')?.amount || 0,
+                    energy_unit: 'kcal',
+                    fat: nutrients.find(n => n.name === 'Fat')?.amount || 0,
+                    fat_unit: 'g',
+                    carbohydrates: nutrients.find(n => n.name === 'Carbohydrates')?.amount || 0,
+                    carbohydrates_unit: 'g',
+                    proteins: nutrients.find(n => n.name === 'Protein')?.amount || 0,
+                    proteins_unit: 'g',
+                    fiber: nutrients.find(n => n.name === 'Fiber')?.amount || 0,
+                    fiber_unit: 'g',
+                    salt: nutrients.find(n => n.name === 'Sodium')?.amount ? (nutrients.find(n => n.name === 'Sodium').amount / 1000) : 0, // แปลง mg เป็น g
+                    salt_unit: 'g'
+                };
+            }
+            
+            // ตรวจสอบว่าอยู่ในตะกร้าหรือไม่
+            const isInCartRecipe = isInCart(`recipe-${recipeId}`);
+            const addToCartBtnClass = isInCartRecipe ? 'btn-add-to-cart added' : 'btn-add-to-cart';
+            const addToCartBtnText = isInCartRecipe ? 
+                `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>เพิ่มแล้ว</span>` :
+                `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>เพิ่มลงตะกร้า</span>`;
+            
+            let nutritionHtml = '';
+            if (recipeInfo && recipeInfo.nutrition && recipeInfo.nutrition.nutrients) {
+                const nutrients = recipeInfo.nutrition.nutrients;
+                const importantNutrients = [
+                    { name: 'Calories', th: 'แคลอรี่', unit: 'kcal' },
+                    { name: 'Carbohydrates', th: 'คาร์โบไฮเดรต', unit: 'g' },
+                    { name: 'Fat', th: 'ไขมัน', unit: 'g' },
+                    { name: 'Saturated Fat', th: 'ไขมันอิ่มตัว', unit: 'g' },
+                    { name: 'Sugar', th: 'น้ำตาล', unit: 'g' },
+                    { name: 'Cholesterol', th: 'คอเลสเตอรอล', unit: 'mg' },
+                    { name: 'Sodium', th: 'โซเดียม', unit: 'mg' },
+                    { name: 'Protein', th: 'โปรตีน', unit: 'g' },
+                    { name: 'Fiber', th: 'ไฟเบอร์', unit: 'g' },
+                    { name: 'Vitamin A', th: 'วิตามินเอ', unit: 'IU' },
+                    { name: 'Vitamin E', th: 'วิตามินอี', unit: 'mg' },
+                    { name: 'Vitamin B1', th: 'วิตามินบี1', unit: 'mg' },
+                    { name: 'Vitamin B6', th: 'วิตามินบี6', unit: 'mg' },
+                    { name: 'Magnesium', th: 'แมกนีเซียม', unit: 'mg' },
+                    { name: 'Phosphorus', th: 'ฟอสฟอรัส', unit: 'mg' },
+                    { name: 'Manganese', th: 'แมงกานีส', unit: 'mg' },
+                    { name: 'Copper', th: 'ทองแดง', unit: 'mg' }
+                ];
+                
+                const nutritionItems = importantNutrients.map(nutrient => {
+                    const found = nutrients.find(n => n.name === nutrient.name);
+                    if (found && found.amount > 0) {
+                        return {
+                            label: nutrient.th,
+                            value: found.amount.toFixed(found.amount % 1 === 0 ? 0 : 1),
+                            unit: nutrient.unit
+                        };
+                    }
+                    return null;
+                }).filter(item => item !== null);
+                
+                if (nutritionItems.length > 0) {
+                    nutritionHtml = `
+                        <div class="detail-section">
+                            <h3>ข้อมูลโภชนาการ</h3>
+                            <div class="nutrition-grid">
+                                ${nutritionItems.map(item => `
+                                    <div class="nutrition-item">
+                                        <div class="nutrition-label">${item.label}</div>
+                                        <div class="nutrition-value">${item.value} ${item.unit}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            } else if (nutritionData) {
+                // ถ้าไม่มีข้อมูลโภชนาการแบบ structured ให้ใช้ HTML widget
+                nutritionHtml = `
+                    <div class="detail-section">
+                        <h3>ข้อมูลโภชนาการ</h3>
+                        <div class="nutrition-widget-container">
+                            ${nutritionData}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            let ingredientsHtml = '';
+            if (recipeInfo && recipeInfo.extendedIngredients) {
+                ingredientsHtml = `
+                    <div class="detail-section">
+                        <h3>ส่วนประกอบ</h3>
+                        <ul class="ingredients-list">
+                            ${recipeInfo.extendedIngredients.map(ing => `<li>${ing.original}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            let instructionsHtml = '';
+            if (recipeInfo && recipeInfo.instructions) {
+                // ทำความสะอาด HTML instructions
+                let cleanInstructions = recipeInfo.instructions
+                    .replace(/<[^>]*>/g, '') // ลบ HTML tags
+                    .replace(/\n\s*\n/g, '\n') // ลบบรรทัดว่างซ้ำ
+                    .trim();
+                
+                instructionsHtml = `
+                    <div class="detail-section">
+                        <h3>วิธีทำ</h3>
+                        <div class="instructions-text">${cleanInstructions}</div>
+                    </div>
+                `;
+            }
+            
+            detailDiv.innerHTML = `
+                <button class="btn-close-detail" onclick="closeRecipeDetail()">← กลับ</button>
+                <div class="detail-header">
+                    <div class="detail-image">
+                        <img src="${recipeImage}" alt="${recipeTitle}" onerror="this.src='https://via.placeholder.com/300?text=No+Image'">
+                    </div>
+                    <div class="detail-info">
+                        <h2 class="detail-title">${recipeTitle}</h2>
+                        <button class="${addToCartBtnClass}" onclick="addRecipeToCart(${recipeId}, '${recipeTitle.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', '${recipeImage.replace(/'/g, "\\'")}')" data-recipe-id="recipe-${recipeId}">
+                            ${addToCartBtnText}
+                        </button>
+                    </div>
+                </div>
+                ${nutritionHtml}
+                ${ingredientsHtml}
+                ${instructionsHtml}
+            `;
+            
+            detailDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function closeRecipeDetail() {
+            const detailDiv = document.getElementById('recipeDetail');
+            detailDiv.className = 'product-detail';
+        }
+        
+        // ฟังก์ชันเพิ่ม recipe ลงตะกร้าพร้อมดึงข้อมูลโภชนาการ
+        async function addRecipeToCartWithNutrition(recipeId, recipeTitle, recipeImage) {
+            // ตรวจสอบว่ามีข้อมูลโภชนาการใน cache หรือไม่
+            let nutrition = recipeNutritionCache[recipeId];
+            
+            // ถ้ายังไม่มีข้อมูลโภชนาการ ให้ดึงข้อมูลก่อน
+            if (!nutrition) {
+                try {
+                    showNotification('กำลังดึงข้อมูลโภชนาการ...');
+                    const infoUrl = `${BACKEND_API_BASE}/recipes/${recipeId}/information`;
+                    const infoResponse = await fetch(infoUrl);
+                    
+                    if (infoResponse.ok) {
+                        const recipeInfo = await infoResponse.json();
+                        if (recipeInfo && recipeInfo.nutrition && recipeInfo.nutrition.nutrients) {
+                            const nutrients = recipeInfo.nutrition.nutrients;
+                            nutrition = {
+                                energy: nutrients.find(n => n.name === 'Calories')?.amount || 0,
+                                energy_unit: 'kcal',
+                                fat: nutrients.find(n => n.name === 'Fat')?.amount || 0,
+                                fat_unit: 'g',
+                                carbohydrates: nutrients.find(n => n.name === 'Carbohydrates')?.amount || 0,
+                                carbohydrates_unit: 'g',
+                                proteins: nutrients.find(n => n.name === 'Protein')?.amount || 0,
+                                proteins_unit: 'g',
+                                fiber: nutrients.find(n => n.name === 'Fiber')?.amount || 0,
+                                fiber_unit: 'g',
+                                salt: nutrients.find(n => n.name === 'Sodium')?.amount ? (nutrients.find(n => n.name === 'Sodium').amount / 1000) : 0,
+                                salt_unit: 'g'
+                            };
+                            // เก็บไว้ใน cache
+                            recipeNutritionCache[recipeId] = nutrition;
+                        }
+                    }
+                } catch (error) {
+                    console.warn('ไม่สามารถดึงข้อมูลโภชนาการได้:', error);
+                }
+            }
+            
+            // สร้าง product object สำหรับตะกร้า
+            const recipeProduct = {
+                id: `recipe-${recipeId}`,
+                name: recipeTitle,
+                brand: 'Recipe',
+                image_url: recipeImage,
+                nutriscore_grade: '',
+                addedAt: new Date().toISOString(),
+                nutrition: nutrition, // ใช้ข้อมูลโภชนาการที่ดึงมา
+                isRecipe: true
+            };
+            
+            const added = addToCart(recipeProduct);
+            const buttons = document.querySelectorAll(`button[data-recipe-id="recipe-${recipeId}"]`);
+            
+            if (added) {
+                showNotification('เพิ่มวิธีทำอาหารลงตะกร้าแล้ว');
+                buttons.forEach(button => {
+                    button.classList.add('added');
+                    button.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span>เพิ่มแล้ว</span>
+                    `;
+                });
+            } else {
+                showNotification('วิธีทำอาหารนี้อยู่ในตะกร้าแล้ว');
+            }
+        }
+
+        // ฟังก์ชันเพิ่ม recipe ลงตะกร้า (ใช้เมื่อมีข้อมูลโภชนาการใน cache แล้ว)
+        function addRecipeToCart(recipeId, recipeTitle, recipeImage) {
+            // ดึงข้อมูลโภชนาการจาก cache
+            const nutrition = recipeNutritionCache[recipeId] || null;
+            
+            // สร้าง product object สำหรับตะกร้า
+            const recipeProduct = {
+                id: `recipe-${recipeId}`, // เพิ่ม prefix เพื่อไม่ให้ชนกับ product id
+                name: recipeTitle,
+                brand: 'Recipe',
+                image_url: recipeImage,
+                nutriscore_grade: '',
+                addedAt: new Date().toISOString(),
+                nutrition: nutrition, // ใช้ข้อมูลโภชนาการจาก cache
+                isRecipe: true // ระบุว่าเป็น recipe
+            };
+            
+            const added = addToCart(recipeProduct);
+            const buttons = document.querySelectorAll(`button[data-recipe-id="recipe-${recipeId}"]`);
+            
+            if (added) {
+                showNotification('เพิ่มวิธีทำอาหารลงตะกร้าแล้ว');
+                buttons.forEach(button => {
+                    button.classList.add('added');
+                    button.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span>เพิ่มแล้ว</span>
+                    `;
+                });
+            } else {
+                showNotification('วิธีทำอาหารนี้อยู่ในตะกร้าแล้ว');
+            }
+        }
+        
+        // ฟังก์ชันแสดงการแจ้งเตือน
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #6D2121;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                z-index: 1000;
+                font-size: 14px;
+                font-weight: 600;
+                animation: slideDown 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideUp 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 2000);
+        }
+        
+        // เพิ่ม CSS animation สำหรับ notification
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateX(-50%) translateY(-20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(0);
+                }
+            }
+            @keyframes slideUp {
+                from {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(-50%) translateY(-20px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        function showLoadingIndicator(show) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            loadingIndicator.style.display = show ? 'flex' : 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function clearRecipes() {
+            document.getElementById('recipesContainer').innerHTML = '';
+        }
+
+        // รับคำค้นหาจาก URL parameter เมื่อโหลดหน้า
+        window.addEventListener('DOMContentLoaded', () => {
+            updateCartBadge();
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const query = urlParams.get('q');
+            
+            if (query) {
+                document.getElementById('searchInput').value = query;
+                expandCard();
+                searchRecipes();
+            }
+        });
+    </script>
+</body>
+</html>
+
