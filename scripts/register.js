@@ -1,7 +1,7 @@
 const form = document.getElementById('registerForm');
 const messageDiv = document.getElementById('message');
 const submitBtn = document.getElementById('submitBtn');
-const API_URL = 'https://63-back-production.up.railway.app/api/auth/signup';
+const API_URL = 'http://localhost:3002/api/auth/signup';
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();

@@ -32,7 +32,7 @@ cd Project_63_font
 
 2. เปิดไฟล์ `pages/login.html` ในเบราว์เซอร์
 
-3. สำหรับการใช้งานเต็มรูปแบบ ต้องมี Backend API Server ทำงานที่ `https://63-back-production.up.railway.app`
+3. สำหรับการใช้งานเต็มรูปแบบ ต้องมี Backend API Server ทำงานที่ `http://localhost:3002`
 
 ## โครงสร้างโปรเจกต์
 
@@ -67,8 +67,8 @@ Project_63_font/
 
 ## หมายเหตุ
 
-- ระบบนี้ใช้ Backend API ที่ `https://63-back-production.up.railway.app` (Railway Production)
-- ระบบจะใช้ HTTPS สำหรับความปลอดภัย
+- ระบบนี้ใช้ Backend API ที่ `http://localhost:3002` สำหรับการทำงานบางส่วน
+- สำหรับการใช้งานจริง ควรเปลี่ยน API endpoint เป็น production URL
 
 ## License
 

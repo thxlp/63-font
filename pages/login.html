@@ -50,7 +50,7 @@
     </div>
 
     <script>
-        const API_URL = 'https://63-back-production.up.railway.app/api/auth/signin';
+        const API_URL = 'http://localhost:3002/api/auth/signin';
 
         // ฟังก์ชันแสดงข้อความ
         function showMessage(message, type = 'error') {
@@ -218,11 +218,11 @@
                             
                             // ลองหลาย endpoint และหลายวิธี (ใช้ endpoint ที่มีจริงตาม availableRoutes)
                             const profileEndpoints = [
-                                `https://63-back-production.up.railway.app/api/data/bmi_records?user_id=${userIdToSave}`,
-                                `https://63-back-production.up.railway.app/api/data/bmi_records`,
-                                `https://63-back-production.up.railway.app/api/auth/profile?user_id=${userIdToSave}`,
-                                `https://63-back-production.up.railway.app/api/users/profile?user_id=${userIdToSave}`,
-                                `https://63-back-production.up.railway.app/api/auth/profile`
+                                `http://localhost:3002/api/data/bmi_records?user_id=${userIdToSave}`,
+                                `http://localhost:3002/api/data/bmi_records`,
+                                `http://localhost:3002/api/auth/profile?user_id=${userIdToSave}`,
+                                `http://localhost:3002/api/users/profile?user_id=${userIdToSave}`,
+                                `http://localhost:3002/api/auth/profile`
                             ];
                             
                             let profileDataFetched = false;

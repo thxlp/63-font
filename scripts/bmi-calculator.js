@@ -4,7 +4,7 @@ let currentCalories = 0;
 let currentWeight = 0;
 let currentHeight = 0;
 
-const API_URL = 'https://63-back-production.up.railway.app/api/auth/signup';
+const API_URL = 'http://localhost:3002/api/auth/signup';
 
 // DOM Elements
 const calculateBtn = document.getElementById('calculateBtn');
