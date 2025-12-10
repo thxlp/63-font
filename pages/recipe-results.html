@@ -70,10 +70,13 @@
         <span class="fab-badge" id="fabBadge" style="display: none;">0</span>
     </a>
 
+    <script src="../scripts/config.js"></script>
     <script src="../scripts/cart.js"></script>
     <script>
-        // ใช้ backend endpoint แทนการเรียก Spoonacular API โดยตรง
-        const BACKEND_API_BASE = 'http://localhost:3002/api';
+        // ใช้ backend endpoint จาก config.js หรือ fallback เป็น Railway API
+        const BACKEND_API_BASE = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.RECIPES?.SEARCH) 
+            ? API_ENDPOINTS.RECIPES.SEARCH.replace('/recipes/search', '') 
+            : 'https://63-back-production.up.railway.app/api';
         
         // เก็บข้อมูล recipe nutrition ไว้ในตัวแปร global
         let recipeNutritionCache = {};
@@ -97,7 +100,10 @@
 
             try {
                 // เรียก backend endpoint แทน Spoonacular API โดยตรง
-                const url = `${BACKEND_API_BASE}/recipes/search?query=${encodeURIComponent(query)}&number=20`;
+                const searchUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.RECIPES?.SEARCH) 
+                    ? API_ENDPOINTS.RECIPES.SEARCH
+                    : `${BACKEND_API_BASE}/recipes/search`;
+                const url = `${searchUrl}?query=${encodeURIComponent(query)}&number=20`;
                 console.log('📤 กำลังค้นหาสูตรอาหาร:', url);
                 
                 const response = await fetch(url);
@@ -238,8 +244,12 @@
             
             try {
                 // ดึงข้อมูลโภชนาการและข้อมูลสูตรอาหารผ่าน backend endpoint
-                const nutritionUrl = `${BACKEND_API_BASE}/recipes/${recipeId}/nutrition`;
-                const infoUrl = `${BACKEND_API_BASE}/recipes/${recipeId}/information`;
+                const nutritionUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.RECIPES?.NUTRITION) 
+                    ? API_ENDPOINTS.RECIPES.NUTRITION(recipeId)
+                    : `${BACKEND_API_BASE}/recipes/${recipeId}/nutrition`;
+                const infoUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.RECIPES?.INFORMATION) 
+                    ? API_ENDPOINTS.RECIPES.INFORMATION(recipeId)
+                    : `${BACKEND_API_BASE}/recipes/${recipeId}/information`;
                 
                 const [nutritionResponse, infoResponse] = await Promise.all([
                     fetch(nutritionUrl).catch(() => null),
@@ -430,7 +440,9 @@
             if (!nutrition) {
                 try {
                     showNotification('กำลังดึงข้อมูลโภชนาการ...');
-                    const infoUrl = `${BACKEND_API_BASE}/recipes/${recipeId}/information`;
+                    const infoUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.RECIPES?.INFORMATION) 
+                        ? API_ENDPOINTS.RECIPES.INFORMATION(recipeId)
+                        : `${BACKEND_API_BASE}/recipes/${recipeId}/information`;
                     const infoResponse = await fetch(infoUrl);
                     
                     if (infoResponse.ok) {

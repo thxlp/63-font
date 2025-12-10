@@ -32,7 +32,7 @@
 
 ### 2.1 Actors
 1. **ผู้ใช้ (User)**: ผู้ใช้งานทั่วไปของระบบ
-2. **Backend API Server**: เซิร์ฟเวอร์ที่ให้บริการ API (localhost:3002)
+2. **Backend API Server**: เซิร์ฟเวอร์ที่ให้บริการ API (Production: https://63-back-production.up.railway.app, Development: localhost:3002)
 3. **OpenFoodFacts API**: API ภายนอกสำหรับค้นหาข้อมูลผลิตภัณฑ์อาหาร
 4. **Spoonacular API**: API ภายนอกสำหรับค้นหาวิธีทำอาหาร
 

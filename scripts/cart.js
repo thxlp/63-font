@@ -1,5 +1,10 @@
 // ฟังก์ชันสำหรับจัดการตะกร้าสินค้าและคำนวณแคลอรี่
 
+// โหลด config.js ก่อน (ถ้ายังไม่ได้โหลด)
+if (typeof API_ENDPOINTS === 'undefined') {
+    console.warn('⚠️ config.js ยังไม่ได้โหลด กรุณาเพิ่ม <script src="../scripts/config.js"></script> ใน HTML');
+}
+
 // ดึงข้อมูลตะกร้าจาก localStorage
 function getCart() {
     const cartJson = localStorage.getItem('foodCart');
@@ -148,7 +153,10 @@ async function saveCartHistory() {
         console.log('   items:', items.length, 'รายการ');
         console.log('   total_calories:', totalEnergy.toFixed(1));
         
-        const response = await fetch('http://localhost:3002/api/cart/save', {
+        const apiUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.CART?.SAVE) 
+            ? API_ENDPOINTS.CART.SAVE 
+            : 'https://63-back-production.up.railway.app/api/cart/save';
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -321,9 +329,10 @@ async function getCartHistory(limit = 20, offset = 0) {
         try {
             // URL encode user_id เพื่อรองรับ UUID
             const encodedUserId = encodeURIComponent(userId);
-            const response = await fetch(
-                `http://localhost:3002/api/cart/history?user_id=${encodedUserId}&limit=${limit}&offset=${offset}`
-            );
+            const apiUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.CART?.HISTORY) 
+                ? `${API_ENDPOINTS.CART.HISTORY}?user_id=${encodedUserId}&limit=${limit}&offset=${offset}`
+                : `https://63-back-production.up.railway.app/api/cart/history?user_id=${encodedUserId}&limit=${limit}&offset=${offset}`;
+            const response = await fetch(apiUrl);
             
             if (response.ok) {
                 const data = await response.json();
@@ -381,7 +390,10 @@ async function deleteCartHistory(historyId) {
     // ลองลบผ่าน API ก่อน (ถ้า historyId เป็นตัวเลข แสดงว่าเป็น ID จาก database)
     if (userId && !isNaN(parseInt(historyId))) {
         try {
-            const response = await fetch(`http://localhost:3002/api/cart/${historyId}`, {
+            const apiUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.CART?.DELETE) 
+                ? API_ENDPOINTS.CART.DELETE(historyId)
+                : `https://63-back-production.up.railway.app/api/cart/${historyId}`;
+            const response = await fetch(apiUrl, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
@@ -483,11 +495,17 @@ async function saveDailyCalorieLog() {
         };
 
         // ลองบันทึกลง database ผ่าน API
-        const apiEndpoints = [
-            'http://localhost:3002/api/data/calorie_logs',
-            'http://localhost:3002/api/calorie_logs',
-            'http://localhost:3002/api/data/daily_logs'
-        ];
+        const apiEndpoints = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.DATA?.CALORIE_LOGS) 
+            ? [
+                API_ENDPOINTS.DATA.CALORIE_LOGS,
+                'https://63-back-production.up.railway.app/api/calorie_logs',
+                'https://63-back-production.up.railway.app/api/data/daily_logs'
+            ]
+            : [
+                'https://63-back-production.up.railway.app/api/data/calorie_logs',
+                'https://63-back-production.up.railway.app/api/calorie_logs',
+                'https://63-back-production.up.railway.app/api/data/daily_logs'
+            ];
 
         let savedToDatabase = false;
         for (const endpoint of apiEndpoints) {
@@ -718,9 +736,12 @@ async function getUserTargetCalories() {
         }
 
         // ลองดึงจาก API ก่อน
+        const baseUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.DATA?.BMI_RECORDS) 
+            ? API_ENDPOINTS.DATA.BMI_RECORDS
+            : 'https://63-back-production.up.railway.app/api/data/bmi_records';
         const apiEndpoints = [
-            `http://localhost:3002/api/data/bmi_records?user_id=${userId}`,
-            `http://localhost:3002/api/data/bmi_records`,
+            `${baseUrl}?user_id=${userId}`,
+            baseUrl,
         ];
 
         for (const endpoint of apiEndpoints) {

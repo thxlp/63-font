@@ -4,7 +4,10 @@ let currentCalories = 0;
 let currentWeight = 0;
 let currentHeight = 0;
 
-const API_URL = 'http://localhost:3002/api/auth/signup';
+// ใช้ API endpoint จาก config.js หรือ fallback เป็น Railway API
+const API_URL = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.AUTH?.SIGNUP) 
+    ? API_ENDPOINTS.AUTH.SIGNUP 
+    : 'https://63-back-production.up.railway.app/api/auth/signup';
 
 // DOM Elements
 const calculateBtn = document.getElementById('calculateBtn');

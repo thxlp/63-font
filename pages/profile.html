@@ -87,6 +87,7 @@
         <span class="fab-badge" id="fabBadge" style="display: none;">0</span>
     </a>
 
+    <script src="../scripts/config.js"></script>
     <script src="../scripts/cart.js"></script>
     <script>
         // ฟังก์ชันเปิดหน้าประวัติ
@@ -384,9 +385,15 @@
                 // Phase 1: ลองใช้ Bearer Token ก่อน (ถ้ามี)
                 if (token) {
                     console.log('📡 Phase 1: ลองใช้ Bearer Token');
+                    const authProfileUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.AUTH?.PROFILE) 
+                        ? API_ENDPOINTS.AUTH.PROFILE
+                        : 'https://63-back-production.up.railway.app/api/auth/profile';
+                    const authMeUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.AUTH?.ME) 
+                        ? API_ENDPOINTS.AUTH.ME
+                        : 'https://63-back-production.up.railway.app/api/auth/me';
                     const tokenEndpoints = [
-                        'http://localhost:3002/api/auth/profile',
-                        'http://localhost:3002/api/auth/me'
+                        authProfileUrl,
+                        authMeUrl
                     ];
                     
                     for (const endpoint of tokenEndpoints) {
@@ -447,10 +454,19 @@
                         console.log(`   user_id ที่จะใช้: ${user_id}`);
                         console.log(`   มีข้อมูล BMI แล้วหรือยัง: ${alreadyHasBmiData ? '✓ มี' : '✗ ยังไม่มี'}`);
                         
+                        const baseUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.DATA?.BMI_RECORDS) 
+                            ? API_ENDPOINTS.DATA.BMI_RECORDS
+                            : 'https://63-back-production.up.railway.app/api/data/bmi_records';
+                        const usersProfileUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.USERS?.PROFILE) 
+                            ? API_ENDPOINTS.USERS.PROFILE
+                            : 'https://63-back-production.up.railway.app/api/users/profile';
+                        const authProfileUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.AUTH?.PROFILE) 
+                            ? API_ENDPOINTS.AUTH.PROFILE
+                            : 'https://63-back-production.up.railway.app/api/auth/profile';
                         const userIdEndpoints = [
-                            `http://localhost:3002/api/data/bmi_records`,
-                            `http://localhost:3002/api/users/profile?user_id=${user_id}`,
-                            `http://localhost:3002/api/auth/profile?user_id=${user_id}`
+                            baseUrl,
+                            `${usersProfileUrl}?user_id=${user_id}`,
+                            `${authProfileUrl}?user_id=${user_id}`
                         ];
                         
                         // สร้าง headers ใหม่โดยไม่ใส่ Authorization (เพราะใช้ user_id แทน)
@@ -529,8 +545,11 @@
                                             // ลองดึงข้อมูล user จาก API ก่อน
                                             try {
                                                 console.log('   📡 กำลังดึงข้อมูล user (username, email) จาก API...');
+                                                const authProfileUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.AUTH?.PROFILE) 
+                                                    ? API_ENDPOINTS.AUTH.PROFILE
+                                                    : 'https://63-back-production.up.railway.app/api/auth/profile';
                                                 const userProfileResponse = await fetch(
-                                                    `http://localhost:3002/api/auth/profile?user_id=${user_id}`,
+                                                    `${authProfileUrl}?user_id=${user_id}`,
                                                     {
                                                         method: 'GET',
                                                         headers: {
@@ -663,11 +682,23 @@
                 if (!success && !triedWithToken && !user_id) {
                     console.log('📡 Phase 3: ลอง endpoint ธรรมดา (อาจจะใช้ cookies)');
                     console.warn('   ⚠ Phase 3 อาจจะไม่ทำงานเพราะไม่มี authentication');
+                    const authProfileUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.AUTH?.PROFILE) 
+                        ? API_ENDPOINTS.AUTH.PROFILE
+                        : 'https://63-back-production.up.railway.app/api/auth/profile';
+                    const usersProfileUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.USERS?.PROFILE) 
+                        ? API_ENDPOINTS.USERS.PROFILE
+                        : 'https://63-back-production.up.railway.app/api/users/profile';
+                    const authMeUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.AUTH?.ME) 
+                        ? API_ENDPOINTS.AUTH.ME
+                        : 'https://63-back-production.up.railway.app/api/auth/me';
+                    const authUserUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.AUTH?.USER) 
+                        ? API_ENDPOINTS.AUTH.USER
+                        : 'https://63-back-production.up.railway.app/api/auth/user';
                     const fallbackEndpoints = [
-                        'http://localhost:3002/api/auth/profile',
-                        'http://localhost:3002/api/users/profile', // ✅ ใช้ /api/users/profile (มี 's')
-                        'http://localhost:3002/api/auth/me',
-                        'http://localhost:3002/api/auth/user'
+                        authProfileUrl,
+                        usersProfileUrl, // ✅ ใช้ /api/users/profile (มี 's')
+                        authMeUrl,
+                        authUserUrl
                         // ⚠️ ไม่เรียก /api/auth/signin เพราะมันเป็น POST method
                     ];
                     
@@ -704,7 +735,7 @@
                 if (!success) {
                     console.warn('⚠ ไม่สามารถดึงข้อมูลจาก API ได้ หรือไม่มีข้อมูล BMI');
                     console.warn('   💡 ตรวจสอบว่า:');
-                    console.warn('      1. Backend server รันอยู่ที่ http://localhost:3002');
+                    console.warn('      1. Backend server รันอยู่ที่ https://63-back-production.up.railway.app');
                     console.warn('      2. API endpoint ถูกต้อง');
                     console.warn('      3. Token หรือ user_id ถูกต้อง');
                     
@@ -720,9 +751,9 @@
                                 // จาก availableRoutes: GET /api/data/:tableName
                                 // ลองดึงข้อมูลจาก bmi_records table โดยตรง
                                 const bmiEndpoints = [
-                                    `http://localhost:3002/api/data/bmi_records`,
-                                    `http://localhost:3002/api/users/profile?user_id=${user_id}`,
-                                    `http://localhost:3002/api/auth/profile?user_id=${user_id}`
+                                    baseUrl,
+                                    `${usersProfileUrl}?user_id=${user_id}`,
+                                    `${authProfileUrl}?user_id=${user_id}`
                                 ];
                                 
                                 console.log('   💡 หมายเหตุ: API /api/data/bmi_records อาจจะต้องใช้ query parameter หรือ filter');
@@ -829,8 +860,12 @@
                                                     // ลองดึงข้อมูล user จาก API ก่อน
                                                     try {
                                                         console.log('   📡 กำลังดึงข้อมูล user (username, email) จาก API...');
+                                                        const authProfileUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.AUTH?.PROFILE) 
+                                                            ? API_ENDPOINTS.AUTH.PROFILE
+                                                            : 'https://63-back-production.up.railway.app/api/auth/profile';
                                                         const userProfileResponse = await fetch(
-                                                            `http://localhost:3002/api/auth/profile?user_id=${user_id}`,
+                                                            `${authProfileUrl}?user_id=${user_id}`,
+                                                            `${authProfileUrl}?user_id=${user_id}`,
                                                             {
                                                                 method: 'GET',
                                                                 headers: {
@@ -1055,11 +1090,20 @@
                 return;
             }
             
+            const baseUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.DATA?.BMI_RECORDS) 
+                ? API_ENDPOINTS.DATA.BMI_RECORDS
+                : 'https://63-back-production.up.railway.app/api/data/bmi_records';
+            const authProfileUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.AUTH?.PROFILE) 
+                ? API_ENDPOINTS.AUTH.PROFILE
+                : 'https://63-back-production.up.railway.app/api/auth/profile';
+            const usersProfileUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.USERS?.PROFILE) 
+                ? API_ENDPOINTS.USERS.PROFILE
+                : 'https://63-back-production.up.railway.app/api/users/profile';
             const testEndpoints = [
-                `http://localhost:3002/api/data/bmi_records?user_id=${userId}`,
-                `http://localhost:3002/api/data/bmi_records`,
-                `http://localhost:3002/api/auth/profile?user_id=${userId}`,
-                `http://localhost:3002/api/users/profile?user_id=${userId}`
+                `${baseUrl}?user_id=${userId}`,
+                baseUrl,
+                `${authProfileUrl}?user_id=${userId}`,
+                `${usersProfileUrl}?user_id=${userId}`
             ];
             
             for (const endpoint of testEndpoints) {

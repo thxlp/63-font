@@ -41,7 +41,7 @@ graph TB
 graph LR
     User[ผู้ใช้]
     System[ระบบจัดการอาหารและโภชนาการ]
-    Backend[Backend API Server<br/>localhost:3002]
+    Backend[Backend API Server<br/>Railway Production]
     OpenFood[OpenFoodFacts API]
     Spoonacular[Spoonacular API]
     
@@ -518,7 +518,7 @@ graph TB
     end
     
     subgraph APIs[External APIs]
-        Backend[Backend API<br/>localhost:3002]
+        Backend[Backend API<br/>Railway Production]
         OpenFood[OpenFoodFacts API]
         Spoonacular[Spoonacular API]
     end
@@ -546,7 +546,7 @@ graph TB
     end
     
     subgraph Server[Server Side]
-        BackendServer[Backend Server<br/>localhost:3002]
+        BackendServer[Backend Server<br/>Railway Production]
     end
     
     subgraph External[External Services]
