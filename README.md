@@ -68,8 +68,7 @@ Project_63_font/
 ## หมายเหตุ
 
 - ระบบนี้ใช้ Backend API ที่ `https://63-back-production.up.railway.app` (Railway Production)
-- ระบบจะตรวจสอบอัตโนมัติว่าเป็น production หรือ development และใช้ API endpoint ที่เหมาะสม
-- สำหรับการพัฒนาในเครื่อง ระบบจะใช้ `http://localhost:3002` อัตโนมัติ
+- ระบบจะใช้ HTTPS สำหรับความปลอดภัย
 
 ## License
 

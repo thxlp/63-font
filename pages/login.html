@@ -49,12 +49,8 @@
         </div>
     </div>
 
-    <script src="../scripts/config.js"></script>
     <script>
-        // ใช้ API endpoint จาก config.js หรือ fallback เป็น Railway API
-        const API_URL = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.AUTH?.SIGNIN) 
-            ? API_ENDPOINTS.AUTH.SIGNIN 
-            : 'https://63-back-production.up.railway.app/api/auth/signin';
+        const API_URL = 'https://63-back-production.up.railway.app/api/auth/signin';
 
         // ฟังก์ชันแสดงข้อความ
         function showMessage(message, type = 'error') {
@@ -221,21 +217,12 @@
                             console.log('📡 กำลังดึงข้อมูล BMI จาก API profile...');
                             
                             // ลองหลาย endpoint และหลายวิธี (ใช้ endpoint ที่มีจริงตาม availableRoutes)
-                            const baseUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.DATA?.BMI_RECORDS) 
-                                ? API_ENDPOINTS.DATA.BMI_RECORDS
-                                : 'https://63-back-production.up.railway.app/api/data/bmi_records';
-                            const authProfileUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.AUTH?.PROFILE) 
-                                ? API_ENDPOINTS.AUTH.PROFILE
-                                : 'https://63-back-production.up.railway.app/api/auth/profile';
-                            const usersProfileUrl = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.USERS?.PROFILE) 
-                                ? API_ENDPOINTS.USERS.PROFILE
-                                : 'https://63-back-production.up.railway.app/api/users/profile';
                             const profileEndpoints = [
-                                `${baseUrl}?user_id=${userIdToSave}`,
-                                baseUrl,
-                                `${authProfileUrl}?user_id=${userIdToSave}`,
-                                `${usersProfileUrl}?user_id=${userIdToSave}`,
-                                authProfileUrl
+                                `https://63-back-production.up.railway.app/api/data/bmi_records?user_id=${userIdToSave}`,
+                                `https://63-back-production.up.railway.app/api/data/bmi_records`,
+                                `https://63-back-production.up.railway.app/api/auth/profile?user_id=${userIdToSave}`,
+                                `https://63-back-production.up.railway.app/api/users/profile?user_id=${userIdToSave}`,
+                                `https://63-back-production.up.railway.app/api/auth/profile`
                             ];
                             
                             let profileDataFetched = false;

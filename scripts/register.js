@@ -1,10 +1,7 @@
 const form = document.getElementById('registerForm');
 const messageDiv = document.getElementById('message');
 const submitBtn = document.getElementById('submitBtn');
-// ใช้ API endpoint จาก config.js หรือ fallback เป็น Railway API
-const API_URL = (typeof API_ENDPOINTS !== 'undefined' && API_ENDPOINTS.AUTH?.SIGNUP) 
-    ? API_ENDPOINTS.AUTH.SIGNUP 
-    : 'https://63-back-production.up.railway.app/api/auth/signup';
+const API_URL = 'https://63-back-production.up.railway.app/api/auth/signup';
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();

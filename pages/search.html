@@ -70,13 +70,9 @@
         <span class="fab-badge" id="fabBadge" style="display: none;">0</span>
     </a>
 
-    <script src="../scripts/config.js"></script>
     <script src="../scripts/cart.js"></script>
     <script>
-        // ใช้ API base URL จาก config.js หรือ fallback เป็น Railway API
-        const DEFAULT_API_ORIGIN = (typeof API_BASE_URL !== 'undefined') 
-            ? API_BASE_URL 
-            : 'https://63-back-production.up.railway.app';
+        const DEFAULT_API_ORIGIN = 'https://63-back-production.up.railway.app';
         const REQUEST_TIMEOUT = 60000; // เพิ่มเป็น 60 วินาที
         const MAX_RETRIES = 3; // เพิ่มจำนวน retry เป็น 3 ครั้ง
         const INITIAL_RETRY_DELAY = 2000; // เริ่มต้น delay 2 วินาที
