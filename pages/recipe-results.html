@@ -260,9 +260,24 @@
                 if (nutritionResponse) {
                     console.log('📥 Nutrition response status:', nutritionResponse.status, nutritionResponse.statusText);
                     if (nutritionResponse.ok) {
-                        const nutritionText = await nutritionResponse.text();
-                        nutritionData = nutritionText;
-                        console.log('✅ Nutrition data received:', nutritionData ? 'Yes (HTML widget)' : 'No');
+                        const contentType = nutritionResponse.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            // ถ้าเป็น JSON ให้ parse
+                            nutritionData = await nutritionResponse.json();
+                            console.log('✅ Nutrition data received (JSON):', nutritionData);
+                        } else {
+                            // ถ้าเป็น HTML หรือ text อื่นๆ
+                            const nutritionText = await nutritionResponse.text();
+                            // ลอง parse เป็น JSON ถ้าเป็นไปได้
+                            try {
+                                nutritionData = JSON.parse(nutritionText);
+                                console.log('✅ Nutrition data parsed from text (JSON):', nutritionData);
+                            } catch (e) {
+                                // ถ้าไม่ใช่ JSON ก็ใช้เป็น HTML widget
+                                nutritionData = nutritionText;
+                                console.log('✅ Nutrition data received (HTML widget):', nutritionData ? 'Yes' : 'No');
+                            }
+                        }
                     } else {
                         const errorText = await nutritionResponse.text();
                         console.error('❌ Nutrition API error response:', errorText);
@@ -394,16 +409,110 @@
                     console.warn('⚠️ No nutrition items found after filtering');
                 }
             } else if (nutritionData) {
-                // ถ้าไม่มีข้อมูลโภชนาการแบบ structured ให้ใช้ HTML widget
-                console.log('📊 Using HTML nutrition widget');
-                nutritionHtml = `
-                    <div class="detail-section">
-                        <h3>ข้อมูลโภชนาการ</h3>
-                        <div class="nutrition-widget-container">
-                            ${nutritionData}
+                // ตรวจสอบว่า nutritionData เป็น object (JSON) หรือ string (HTML)
+                if (typeof nutritionData === 'object' && nutritionData !== null) {
+                    // ถ้าเป็น JSON object ให้ format เป็น UI
+                    console.log('📊 Parsing nutrition data from JSON object');
+                    
+                    // ตรวจสอบว่าเป็น array หรือ object
+                    let nutrientsArray = [];
+                    if (Array.isArray(nutritionData)) {
+                        nutrientsArray = nutritionData;
+                    } else if (nutritionData.nutrients && Array.isArray(nutritionData.nutrients)) {
+                        nutrientsArray = nutritionData.nutrients;
+                    } else if (nutritionData.nutrition && nutritionData.nutrition.nutrients) {
+                        nutrientsArray = nutritionData.nutrition.nutrients;
+                    } else {
+                        // ลองแปลง object เป็น array
+                        nutrientsArray = Object.values(nutritionData).filter(item => 
+                            item && (item.title || item.name) && item.amount !== undefined
+                        );
+                    }
+                    
+                    console.log('📊 Found nutrients in nutritionData:', nutrientsArray.length);
+                    
+                    if (nutrientsArray.length > 0) {
+                        // Map nutrients to display format
+                        const nutritionMap = {
+                            'Calories': { th: 'แคลอรี่', unit: 'kcal' },
+                            'Carbohydrates': { th: 'คาร์โบไฮเดรต', unit: 'g' },
+                            'Fat': { th: 'ไขมัน', unit: 'g' },
+                            'Saturated Fat': { th: 'ไขมันอิ่มตัว', unit: 'g' },
+                            'Sugar': { th: 'น้ำตาล', unit: 'g' },
+                            'Cholesterol': { th: 'คอเลสเตอรอล', unit: 'mg' },
+                            'Sodium': { th: 'โซเดียม', unit: 'mg' },
+                            'Protein': { th: 'โปรตีน', unit: 'g' },
+                            'Fiber': { th: 'ไฟเบอร์', unit: 'g' },
+                            'Vitamin A': { th: 'วิตามินเอ', unit: 'IU' },
+                            'Vitamin E': { th: 'วิตามินอี', unit: 'mg' },
+                            'Vitamin B1': { th: 'วิตามินบี1', unit: 'mg' },
+                            'Vitamin B6': { th: 'วิตามินบี6', unit: 'mg' },
+                            'Magnesium': { th: 'แมกนีเซียม', unit: 'mg' },
+                            'Phosphorus': { th: 'ฟอสฟอรัส', unit: 'mg' },
+                            'Manganese': { th: 'แมงกานีส', unit: 'mg' },
+                            'Copper': { th: 'ทองแดง', unit: 'mg' }
+                        };
+                        
+                        const nutritionItems = nutrientsArray
+                            .map(nutrient => {
+                                const name = nutrient.name || nutrient.title || '';
+                                const amount = parseFloat(nutrient.amount) || 0;
+                                const unit = nutrient.unit || '';
+                                
+                                if (amount <= 0) return null;
+                                
+                                // หา mapping หรือใช้ชื่อและ unit จากข้อมูล
+                                const mapped = nutritionMap[name] || { th: name, unit: unit || 'g' };
+                                
+                                return {
+                                    label: mapped.th || name,
+                                    value: amount.toFixed(amount % 1 === 0 ? 0 : 1),
+                                    unit: mapped.unit || unit || 'g'
+                                };
+                            })
+                            .filter(item => item !== null && item.value > 0);
+                        
+                        if (nutritionItems.length > 0) {
+                            nutritionHtml = `
+                                <div class="detail-section">
+                                    <h3>ข้อมูลโภชนาการ</h3>
+                                    <div class="nutrition-grid">
+                                        ${nutritionItems.map(item => `
+                                            <div class="nutrition-item">
+                                                <div class="nutrition-label">${item.label}</div>
+                                                <div class="nutrition-value">${item.value} ${item.unit}</div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            console.warn('⚠️ No valid nutrition items found after parsing');
+                        }
+                    }
+                } else if (typeof nutritionData === 'string') {
+                    // ถ้าเป็น HTML string ให้ใช้ HTML widget
+                    console.log('📊 Using HTML nutrition widget');
+                    nutritionHtml = `
+                        <div class="detail-section">
+                            <h3>ข้อมูลโภชนาการ</h3>
+                            <div class="nutrition-widget-container">
+                                ${nutritionData}
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                }
+                
+                // ถ้ายังไม่มี nutritionHtml ให้แสดงข้อความว่าไม่พบข้อมูล
+                if (!nutritionHtml) {
+                    console.warn('⚠️ No nutrition HTML generated from nutritionData');
+                    nutritionHtml = `
+                        <div class="detail-section">
+                            <h3>ข้อมูลโภชนาการ</h3>
+                            <p style="text-align: center; padding: 20px; color: #666;">ไม่พบข้อมูลโภชนาการสำหรับสูตรอาหารนี้</p>
+                        </div>
+                    `;
+                }
             } else {
                 console.warn('⚠️ No nutrition data available');
                 nutritionHtml = `
