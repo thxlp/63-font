@@ -241,28 +241,60 @@
                 const nutritionUrl = `${BACKEND_API_BASE}/recipes/${recipeId}/nutrition`;
                 const infoUrl = `${BACKEND_API_BASE}/recipes/${recipeId}/information`;
                 
+                console.log('📤 กำลังดึงข้อมูลโภชนาการ:', { recipeId, nutritionUrl, infoUrl });
+                
                 const [nutritionResponse, infoResponse] = await Promise.all([
-                    fetch(nutritionUrl).catch(() => null),
-                    fetch(infoUrl).catch(() => null)
+                    fetch(nutritionUrl).catch(err => {
+                        console.error('❌ Nutrition API error:', err);
+                        return null;
+                    }),
+                    fetch(infoUrl).catch(err => {
+                        console.error('❌ Info API error:', err);
+                        return null;
+                    })
                 ]);
                 
                 let nutritionData = null;
                 let recipeInfo = null;
                 
-                if (nutritionResponse && nutritionResponse.ok) {
-                    const nutritionText = await nutritionResponse.text();
-                    nutritionData = nutritionText;
+                if (nutritionResponse) {
+                    console.log('📥 Nutrition response status:', nutritionResponse.status, nutritionResponse.statusText);
+                    if (nutritionResponse.ok) {
+                        const nutritionText = await nutritionResponse.text();
+                        nutritionData = nutritionText;
+                        console.log('✅ Nutrition data received:', nutritionData ? 'Yes (HTML widget)' : 'No');
+                    } else {
+                        const errorText = await nutritionResponse.text();
+                        console.error('❌ Nutrition API error response:', errorText);
+                    }
                 }
                 
-                if (infoResponse && infoResponse.ok) {
-                    recipeInfo = await infoResponse.json();
+                if (infoResponse) {
+                    console.log('📥 Info response status:', infoResponse.status, infoResponse.statusText);
+                    if (infoResponse.ok) {
+                        recipeInfo = await infoResponse.json();
+                        console.log('✅ Recipe info received:', recipeInfo ? 'Yes' : 'No');
+                        console.log('📊 Nutrition data in recipeInfo:', recipeInfo?.nutrition ? 'Yes' : 'No');
+                        if (recipeInfo?.nutrition) {
+                            console.log('📊 Nutrients:', recipeInfo.nutrition.nutrients?.length || 0, 'items');
+                        }
+                    } else {
+                        const errorText = await infoResponse.text();
+                        console.error('❌ Info API error response:', errorText);
+                    }
+                }
+                
+                // ตรวจสอบว่ามีข้อมูลโภชนาการหรือไม่
+                if (!recipeInfo && !nutritionData) {
+                    showError('ไม่สามารถดึงข้อมูลโภชนาการได้ - กรุณาตรวจสอบว่า backend endpoint ทำงานอยู่');
+                    return;
                 }
                 
                 displayRecipeDetail(recipeId, recipeTitle, recipeImage, nutritionData, recipeInfo);
                 
             } catch (error) {
+                console.error('❌ Nutrition error:', error);
                 showError('ไม่สามารถดึงข้อมูลโภชนาการได้: ' + error.message);
-                console.error('Nutrition error:', error);
             } finally {
                 showLoadingIndicator(false);
             }
@@ -308,6 +340,8 @@
             let nutritionHtml = '';
             if (recipeInfo && recipeInfo.nutrition && recipeInfo.nutrition.nutrients) {
                 const nutrients = recipeInfo.nutrition.nutrients;
+                console.log('📊 Processing nutrients:', nutrients.length, 'items');
+                
                 const importantNutrients = [
                     { name: 'Calories', th: 'แคลอรี่', unit: 'kcal' },
                     { name: 'Carbohydrates', th: 'คาร์โบไฮเดรต', unit: 'g' },
@@ -340,6 +374,8 @@
                     return null;
                 }).filter(item => item !== null);
                 
+                console.log('📊 Nutrition items found:', nutritionItems.length);
+                
                 if (nutritionItems.length > 0) {
                     nutritionHtml = `
                         <div class="detail-section">
@@ -354,15 +390,26 @@
                             </div>
                         </div>
                     `;
+                } else {
+                    console.warn('⚠️ No nutrition items found after filtering');
                 }
             } else if (nutritionData) {
                 // ถ้าไม่มีข้อมูลโภชนาการแบบ structured ให้ใช้ HTML widget
+                console.log('📊 Using HTML nutrition widget');
                 nutritionHtml = `
                     <div class="detail-section">
                         <h3>ข้อมูลโภชนาการ</h3>
                         <div class="nutrition-widget-container">
                             ${nutritionData}
                         </div>
+                    </div>
+                `;
+            } else {
+                console.warn('⚠️ No nutrition data available');
+                nutritionHtml = `
+                    <div class="detail-section">
+                        <h3>ข้อมูลโภชนาการ</h3>
+                        <p style="text-align: center; padding: 20px; color: #666;">ไม่พบข้อมูลโภชนาการสำหรับสูตรอาหารนี้</p>
                     </div>
                 `;
             }
