@@ -602,8 +602,8 @@ async function finishCart() {
             
             alert(message);
         
-        // ย้อนกลับไปหน้าค้นหา
-        window.location.href = '../pages/search.html';
+        // ไปที่หน้าประวัติ
+        window.location.href = '../pages/history.html';
         } else {
             alert('เกิดข้อผิดพลาดในการบันทึกประวัติ: ' + (cartResult.message || 'ไม่ทราบสาเหตุ'));
             if (finishBtn) {
