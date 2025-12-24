@@ -26,7 +26,7 @@
 
 1. Clone repository นี้
 ```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+git clone https://github.com/thxlp/63-font.git
 cd Project_63_font
 ```
 
@@ -57,13 +57,28 @@ Project_63_font/
 
 ```
 
-## GitHub Pages
+## การ Deploy
+
+### GitHub Pages
 
 เว็บไซต์นี้สามารถ deploy บน GitHub Pages ได้โดย:
 
-1. ไปที่ Settings > Pages ใน GitHub repository
-2. เลือก branch `main` และ folder `/ (root)`
-3. ระบบจะสร้าง URL สำหรับเว็บไซต์ของคุณ
+1. ไปที่ GitHub repository: https://github.com/thxlp/63-font
+2. ไปที่ **Settings** > **Pages** (ในเมนูด้านซ้าย)
+3. ในส่วน **Source**:
+   - เลือก Branch: `main`
+   - เลือก Folder: `/ (root)`
+4. คลิก **Save**
+5. รอสักครู่ GitHub จะสร้าง URL สำหรับเว็บไซต์ของคุณ (เช่น: `https://thxlp.github.io/63-font/`)
+
+### Vercel หรือ Netlify
+
+โปรเจกต์นี้มีไฟล์ config สำหรับ deploy บน Vercel และ Netlify อยู่แล้ว:
+
+- **Vercel**: มีไฟล์ `vercel.json` พร้อมใช้งาน
+- **Netlify**: มีไฟล์ `netlify.toml` พร้อมใช้งาน
+
+เพียงแค่เชื่อมต่อ GitHub repository กับ Vercel/Netlify ระบบจะ deploy อัตโนมัติ
 
 ## หมายเหตุ
 
