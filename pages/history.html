@@ -6,6 +6,7 @@
     <title>history</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../styles/cart-style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -30,6 +31,17 @@
 
         <div class="card-glass cart-card">
             <h3 class="section-title">ประวัติตะกร้าที่บันทึก</h3>
+            
+            <div class="weekly-calorie-section">
+                <h4 class="section-subtitle">กราฟแคลอรี่ 7 วันล่าสุด</h4>
+                <div class="weekly-calorie-info" id="weeklyCalorieInfo">
+                    กำลังโหลดข้อมูลแคลอรี่จากโปรไฟล์...
+                </div>
+                <div class="weekly-calorie-chart-wrapper">
+                    <canvas id="weeklyCalorieChart"></canvas>
+                </div>
+                <div class="weekly-calorie-summary" id="weeklyCalorieSummary"></div>
+            </div>
             
             <div class="cart-content" id="historyContent">
                 <!-- ประวัติจะถูกแสดงที่นี่ -->
@@ -56,6 +68,250 @@
 
     <script src="../scripts/cart.js"></script>
     <script>
+        let weeklyCalorieChartInstance = null;
+
+        // ดึงค่าแคลอรี่ที่ควรได้รับจากข้อมูลผู้ใช้ใน localStorage (หน้า Profile เป็นตัวตั้ง)
+        function getUserRecommendedCalories() {
+            const infoEl = document.getElementById('weeklyCalorieInfo');
+
+            const savedUser = localStorage.getItem('userData');
+            if (!savedUser) {
+                if (infoEl) {
+                    infoEl.textContent = 'ไม่พบข้อมูลผู้ใช้จากโปรไฟล์ กรุณาตรวจสอบที่หน้า Profile';
+                }
+                return null;
+            }
+
+            try {
+                const userData = JSON.parse(savedUser);
+                const rawCalories = userData.calories !== undefined
+                    ? userData.calories
+                    : userData.calorie;
+
+                if (rawCalories === undefined || rawCalories === null || rawCalories === '') {
+                    if (infoEl) {
+                        infoEl.textContent = 'ไม่พบค่าความต้องการแคลอรี่ในโปรไฟล์ กรุณาคำนวณ BMI/แคลอรี่ก่อน';
+                    }
+                    return null;
+                }
+
+                const calories = typeof rawCalories === 'number'
+                    ? rawCalories
+                    : parseFloat(rawCalories);
+
+                if (isNaN(calories) || calories <= 0 || calories > 10000) {
+                    if (infoEl) {
+                        infoEl.textContent = 'ค่าความต้องการแคลอรี่จากโปรไฟล์ไม่ถูกต้อง';
+                    }
+                    return null;
+                }
+
+                if (infoEl) {
+                    infoEl.textContent = `เกณฑ์แคลอรี่ต่อวันที่ควรได้รับ: ${calories.toFixed(0)} kcal`;
+                }
+
+                return calories;
+            } catch (e) {
+                console.error('❌ Error parsing userData สำหรับแคลอรี่:', e);
+                if (infoEl) {
+                    infoEl.textContent = 'เกิดข้อผิดพลาดในการอ่านข้อมูลโปรไฟล์';
+                }
+                return null;
+            }
+        }
+
+        // สรุปแคลอรี่ที่กินใน 7 วันล่าสุดจากประวัติ
+        function calculateWeeklyCalories(history) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const dayKeys = [];
+            const dayLabels = [];
+            const dailyCaloriesMap = {};
+
+            // เตรียม key สำหรับ 7 วันย้อนหลัง (6 วันก่อนหน้า + วันนี้)
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                const key = d.toISOString().slice(0, 10); // YYYY-MM-DD
+                dayKeys.push(key);
+                dayLabels.push(
+                    d.toLocaleDateString('th-TH', {
+                        weekday: 'short'
+                    })
+                );
+                dailyCaloriesMap[key] = 0;
+            }
+
+            function getItemCalories(item) {
+                if (item.summary && item.summary.totalEnergy !== undefined && item.summary.totalEnergy !== null) {
+                    const val = parseFloat(item.summary.totalEnergy);
+                    return isNaN(val) ? 0 : val;
+                }
+                if (item.total_calories !== undefined && item.total_calories !== null) {
+                    const val = parseFloat(item.total_calories);
+                    return isNaN(val) ? 0 : val;
+                }
+                return 0;
+            }
+
+            (history || []).forEach(item => {
+                if (!item.date) return;
+                const d = new Date(item.date);
+                if (isNaN(d)) return;
+                d.setHours(0, 0, 0, 0);
+                const key = d.toISOString().slice(0, 10);
+                if (dailyCaloriesMap.hasOwnProperty(key)) {
+                    dailyCaloriesMap[key] += getItemCalories(item);
+                }
+            });
+
+            const dailyCalories = dayKeys.map(k => dailyCaloriesMap[k]);
+            const weeklyTotal = dailyCalories.reduce((sum, v) => sum + v, 0);
+            const avgPerDay = weeklyTotal / 7;
+
+            return {
+                labels: dayLabels,
+                dailyCalories,
+                weeklyTotal,
+                avgPerDay
+            };
+        }
+
+        // อัปเดตกราฟและสรุปผลว่าเกินหรือต่ำกว่าเกณฑ์
+        function updateWeeklyCalorieChart(history) {
+            const canvas = document.getElementById('weeklyCalorieChart');
+            const summaryEl = document.getElementById('weeklyCalorieSummary');
+            const infoEl = document.getElementById('weeklyCalorieInfo');
+
+            if (!canvas || !window.Chart) {
+                console.warn('⚠ ไม่พบ canvas หรือ Chart.js ยังไม่โหลด');
+                if (summaryEl) {
+                    summaryEl.textContent = 'ไม่สามารถแสดงกราฟได้';
+                }
+                return;
+            }
+
+            const recommended = getUserRecommendedCalories();
+            if (!recommended) {
+                if (summaryEl) {
+                    summaryEl.textContent = 'ไม่สามารถคำนวณเปรียบเทียบแคลอรี่ได้ เนื่องจากไม่มีข้อมูลเกณฑ์จากโปรไฟล์';
+                }
+                if (weeklyCalorieChartInstance) {
+                    weeklyCalorieChartInstance.destroy();
+                    weeklyCalorieChartInstance = null;
+                }
+                return;
+            }
+
+            const { labels, dailyCalories, weeklyTotal, avgPerDay } = calculateWeeklyCalories(history);
+
+            if (weeklyCalorieChartInstance) {
+                weeklyCalorieChartInstance.destroy();
+            }
+
+            const ctx = canvas.getContext('2d');
+            weeklyCalorieChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'แคลอรี่ที่กินต่อวัน',
+                            data: dailyCalories,
+                            backgroundColor: 'rgba(109, 33, 33, 0.7)',
+                            borderRadius: 6,
+                            maxBarThickness: 28
+                        },
+                        {
+                            label: 'เกณฑ์แคลอรี่ที่ควรได้รับ',
+                            data: labels.map(() => recommended),
+                            type: 'line',
+                            borderColor: '#e9a620',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    family: 'Prompt, sans-serif',
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.parsed.y !== null ? context.parsed.y.toFixed(0) : '0';
+                                    return `${label}: ${value} kcal`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                font: {
+                                    family: 'Prompt, sans-serif',
+                                    size: 11
+                                }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                font: {
+                                    family: 'Prompt, sans-serif',
+                                    size: 11
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'kcal',
+                                font: {
+                                    family: 'Prompt, sans-serif',
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (summaryEl) {
+                if (weeklyTotal <= 0) {
+                    summaryEl.textContent = 'ยังไม่มีข้อมูลแคลอรี่ในช่วง 7 วันล่าสุด';
+                } else {
+                    const upper = recommended * 1.05;
+                    const lower = recommended * 0.95;
+                    let statusText = 'อยู่ในเกณฑ์ที่เหมาะสม';
+                    let color = '#6D2121';
+
+                    if (avgPerDay > upper) {
+                        statusText = 'กินมากกว่าเกณฑ์';
+                        color = '#e63e11';
+                    } else if (avgPerDay < lower) {
+                        statusText = 'กินต่ำกว่าเกณฑ์';
+                        color = '#007b55';
+                    }
+
+                    summaryEl.innerHTML =
+                        `เฉลี่ยต่อวัน: <strong>${avgPerDay.toFixed(0)} kcal</strong> ` +
+                        `จากเกณฑ์ <strong>${recommended.toFixed(0)} kcal</strong> ต่อวัน<br>` +
+                        `<span style="color: ${color}; font-weight: 600;">สรุป: คุณ${statusText}ในสัปดาห์นี้</span>`;
+                }
+            }
+        }
+
         // แสดงประวัติตะกร้า (async)
         async function displayHistory() {
             const historyContent = document.getElementById('historyContent');
@@ -67,6 +323,9 @@
             try {
                 // ดึงประวัติจาก API (มี fallback ไป localStorage)
                 const history = await getCartHistory(20, 0);
+
+                // อัปเดตกราฟ 7 วันจากข้อมูลประวัติ
+                updateWeeklyCalorieChart(history);
                 
                 if (history.length === 0) {
                     historyContent.innerHTML = '';
@@ -159,6 +418,45 @@
     </script>
     
     <style>
+        .weekly-calorie-section {
+            margin-bottom: 18px;
+            padding: 14px 12px 16px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(109, 33, 33, 0.12), rgba(255, 255, 255, 0.9));
+            border: 1px solid rgba(109, 33, 33, 0.15);
+        }
+
+        .weekly-calorie-section .section-subtitle {
+            font-size: 13px;
+            margin-bottom: 6px;
+            color: #6D2121;
+            font-weight: 600;
+        }
+
+        .weekly-calorie-info {
+            font-size: 11px;
+            color: #6b4b4b;
+            margin-bottom: 6px;
+        }
+
+        .weekly-calorie-chart-wrapper {
+            position: relative;
+            width: 100%;
+            height: 220px;
+            margin-bottom: 8px;
+        }
+
+        #weeklyCalorieChart {
+            width: 100%;
+            height: 100%;
+        }
+
+        .weekly-calorie-summary {
+            font-size: 11px;
+            color: #4b2c2c;
+            line-height: 1.5;
+        }
+
         .history-item {
             background: white;
             border-radius: 12px;
