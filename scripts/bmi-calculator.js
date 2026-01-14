@@ -4,7 +4,7 @@ let currentCalories = 0;
 let currentWeight = 0;
 let currentHeight = 0;
 
-const API_URL = 'http://localhost:3002/api/auth/signup';
+const API_URL = 'https://heath-check-436133641220.asia-southeast1.run.app/api/auth/signup';
 
 // DOM Elements
 const calculateBtn = document.getElementById('calculateBtn');

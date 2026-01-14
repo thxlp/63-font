@@ -73,7 +73,7 @@
     <script src="../scripts/cart.js"></script>
     <script>
         // ใช้ backend endpoint แทนการเรียก Spoonacular API โดยตรง
-        const BACKEND_API_BASE = 'http://localhost:3002/api';
+        const BACKEND_API_BASE = 'https://heath-check-436133641220.asia-southeast1.run.app/api';
         
         // เก็บข้อมูล recipe nutrition ไว้ในตัวแปร global
         let recipeNutritionCache = {};
@@ -165,7 +165,7 @@
                 // แสดง error message ที่เข้าใจง่าย
                 let errorMessage = error.message;
                 if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                    errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ - กรุณาตรวจสอบว่า backend รันอยู่ที่ port 3002';
+                    errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ - กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต';
                 }
                 
                 showError(`เกิดข้อผิดพลาด: ${errorMessage}`);

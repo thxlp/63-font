@@ -72,16 +72,12 @@
 
     <script src="../scripts/cart.js"></script>
     <script>
-        const DEFAULT_API_ORIGIN = 'http://localhost:3002';
+        const DEFAULT_API_ORIGIN = 'https://heath-check-436133641220.asia-southeast1.run.app';
         const REQUEST_TIMEOUT = 60000; // เพิ่มเป็น 60 วินาที
         const MAX_RETRIES = 3; // เพิ่มจำนวน retry เป็น 3 ครั้ง
         const INITIAL_RETRY_DELAY = 2000; // เริ่มต้น delay 2 วินาที
         let currentProductDetail = null; // เก็บข้อมูลสินค้าปัจจุบันที่แสดง
-        const isSameOriginApi =
-            window.location.origin &&
-            window.location.origin !== 'null' &&
-            window.location.port === '3002';
-        const apiOrigin = isSameOriginApi ? window.location.origin : DEFAULT_API_ORIGIN;
+        const apiOrigin = DEFAULT_API_ORIGIN;
         const API_BASE_URL = `${apiOrigin}/api/openfoodfacts`;
 
         // ฟังก์ชันคำนวณ delay สำหรับ retry (exponential backoff)
@@ -129,7 +125,7 @@
                         await new Promise(resolve => setTimeout(resolve, delay));
                         return fetchJson(url, options, retryCount + 1);
                     }
-                    throw new Error(`ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ (${apiOrigin}). กรุณาตรวจสอบว่า Server รันอยู่ที่ port 3002 หรือไม่`);
+                    throw new Error(`ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ (${apiOrigin}). กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต`);
                 }
                 throw fetchError;
             }
@@ -244,7 +240,7 @@
                 if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
                     errorMessage = 'OpenFoodFacts API timeout - ระบบได้ลองเชื่อมต่อหลายครั้งแล้วแต่ไม่สำเร็จ\n\nคำแนะนำ:\n1. ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต\n2. OpenFoodFacts API อาจกำลังใช้งานหนัก กรุณารอสักครู่แล้วลองใหม่\n3. ลองค้นหาด้วยคำอื่นที่สั้นกว่า\n4. ลองรีเฟรชหน้าเว็บแล้วค้นหาใหม่';
                 } else if (error.message.includes('ไม่สามารถเชื่อมต่อ')) {
-                    errorMessage += '\n\nวิธีแก้ไข:\n1. ตรวจสอบว่า Server รันอยู่ที่ port 3002\n2. รันคำสั่ง: npm start หรือ npm run dev\n3. ตรวจสอบ console log ว่า server เริ่มทำงานแล้ว';
+                    errorMessage += '\n\nวิธีแก้ไข:\n1. ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต\n2. ตรวจสอบว่า backend server ทำงานอยู่';
                 }
                 
                 showError('เกิดข้อผิดพลาด: ' + errorMessage);
@@ -280,7 +276,7 @@
                 if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
                     errorMessage = 'OpenFoodFacts API timeout - ระบบได้ลองเชื่อมต่อหลายครั้งแล้วแต่ไม่สำเร็จ\n\nคำแนะนำ:\n1. ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต\n2. OpenFoodFacts API อาจกำลังใช้งานหนัก กรุณารอสักครู่แล้วลองใหม่\n3. ลองเปิดรายละเอียดสินค้าอีกครั้ง';
                 } else if (error.message.includes('ไม่สามารถเชื่อมต่อ')) {
-                    errorMessage += '\n\nวิธีแก้ไข:\n1. ตรวจสอบว่า Server รันอยู่ที่ port 3002\n2. รันคำสั่ง: npm start หรือ npm run dev';
+                    errorMessage += '\n\nวิธีแก้ไข:\n1. ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต\n2. ตรวจสอบว่า backend server ทำงานอยู่';
                 }
                 
                 showError('เกิดข้อผิดพลาด: ' + errorMessage);

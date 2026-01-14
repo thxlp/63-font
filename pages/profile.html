@@ -6,6 +6,124 @@
     <title>profile</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../styles/profile-style.css">
+    <style>
+        .profile-card {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .profile-section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #6D2121;
+            margin-bottom: 4px;
+        }
+
+        .profile-section-subtitle {
+            font-size: 12px;
+            color: #7b5b5b;
+            margin-bottom: 10px;
+        }
+
+        .avatar-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .avatar-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f7d9d9, #fef5f5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 2px solid rgba(109, 33, 33, 0.15);
+        }
+
+        .btn-change-avatar {
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: none;
+            background: rgba(109, 33, 33, 0.08);
+            color: #6D2121;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-change-avatar:hover {
+            background: rgba(109, 33, 33, 0.16);
+        }
+
+        .bmi-edit-grid,
+        .password-edit-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .bmi-edit-item span {
+            display: block;
+            font-size: 11px;
+            color: #6b4b4b;
+            margin-bottom: 4px;
+        }
+
+        .bmi-edit-item input,
+        .password-edit-grid input {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            font-size: 13px;
+            outline: none;
+        }
+
+        .bmi-edit-item input:focus,
+        .password-edit-grid input:focus {
+            border-color: #6D2121;
+            box-shadow: 0 0 0 1px rgba(109, 33, 33, 0.15);
+        }
+
+        .bmi-edit-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .profile-message {
+            margin: 8px 0 12px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .profile-message.success {
+            background: #e6f4ea;
+            color: #146c43;
+            border: 1px solid #badbcc;
+        }
+
+        .profile-message.error {
+            background: #fde2e1;
+            color: #b02a37;
+            border: 1px solid #f5c2c7;
+        }
+
+        @media (max-width: 480px) {
+            .bmi-edit-grid,
+            .password-edit-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -24,14 +142,23 @@
             <a href="profile.html" class="nav-item active">Profile</a>
         </nav>
 
+        <div id="profileMessage" class="profile-message" style="display: none;"></div>
+
         <div class="card-glass profile-card">
             
             <div class="avatar-wrapper">
-                <div class="avatar-icon"></div>
+                <div class="avatar-icon">
+                    <img id="avatarImage" alt="avatar" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                </div>
+                <button class="btn-change-avatar" id="changeAvatarBtn" type="button">เปลี่ยนรูปโปรไฟล์</button>
+                <input type="file" id="avatarInput" accept="image/*" style="display: none;">
             </div>
 
             <div class="profile-content">
                 
+                <div class="profile-section-title">โปรไฟล์ของคุณ</div>
+                <div class="profile-section-subtitle">จัดการข้อมูลบัญชีและข้อมูลสุขภาพของคุณได้จากหน้านี้</div>
+
                 <div class="info-group">
                     <label>Username</label>
                     <div class="value-text" id="usernameValue">กำลังโหลด...</div>
@@ -59,10 +186,35 @@
                     </div>
                 </div>
 
+                <!-- ฟอร์มแก้ไข BMI / น้ำหนัก / ส่วนสูง -->
+                <div class="info-group mt-3">
+                    <button class="btn-history" type="button" id="toggleBmiEditBtn">แก้ไขข้อมูล BMI</button>
+                </div>
+                <div class="info-group mt-3" id="bmiEditSection" style="display: none;">
+                    <label>แก้ไขข้อมูลร่างกาย (คำนวณ BMI และแคลอรี่ให้อัตโนมัติ)</label>
+                    <div class="bmi-edit-grid">
+                        <div class="bmi-edit-item">
+                            <span>น้ำหนัก (กก.)</span>
+                            <input type="number" id="editWeight" min="0" step="0.1">
+                        </div>
+                        <div class="bmi-edit-item">
+                            <span>ส่วนสูง (ซม.)</span>
+                            <input type="number" id="editHeight" min="0" step="0.1">
+                        </div>
+                    </div>
+                    <div class="bmi-edit-actions">
+                        <button type="button" class="btn-history" id="saveBmiBtn">บันทึก BMI</button>
+                        <button type="button" class="btn-logout" id="cancelBmiBtn">ยกเลิก</button>
+                    </div>
+                </div>
+
                 <div class="info-group mt-3">
                     <label>แคลอรี่ที่ควรได้รับ</label>
                     <div class="value-text" id="caloriesValue">กำลังโหลด...</div>
                 </div>
+
+                <!-- ฟอร์มเปลี่ยนรหัสผ่าน -->
+                <!-- Password change removed: handled by backend/auth system -->
 
                 <div class="info-group mt-3" style="margin-top: 20px;">
                     <button class="btn-history" onclick="openHistory()">ประวัติการทำรายการ</button>
@@ -88,6 +240,37 @@
     </a>
 
     <script src="../scripts/cart.js"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+    <script>
+        // Supabase helper: configure via window.__SUPABASE_URL__/KEY or localStorage keys:
+        //  - SUPABASE_URL
+        //  - SUPABASE_KEY
+        // Replace placeholders with your project values or set them in localStorage.
+        function getSupabaseClient() {
+            if (window.supabaseClient) return window.supabaseClient;
+            const url = window.__SUPABASE_URL__ || localStorage.getItem('SUPABASE_URL') || 'REPLACE_WITH_YOUR_SUPABASE_URL';
+            const key = window.__SUPABASE_KEY__ || localStorage.getItem('SUPABASE_KEY') || 'REPLACE_WITH_YOUR_SUPABASE_ANON_KEY';
+            if (!url || !key || url.includes('REPLACE') || key.includes('REPLACE')) return null;
+            try {
+                window.supabaseClient = supabase.createClient(url, key);
+                // If an access token exists in localStorage, set it for RLS-authenticated requests
+                try {
+                    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+                    if (token && window.supabaseClient && window.supabaseClient.auth && typeof window.supabaseClient.auth.setAuth === 'function') {
+                        window.supabaseClient.auth.setAuth(token);
+                        console.log('Supabase: set auth token from localStorage');
+                    }
+                } catch (e) {
+                    console.warn('Supabase: failed to set auth token', e.message || e);
+                }
+                return window.supabaseClient;
+            } catch (e) {
+                console.error('Supabase init error:', e);
+                return null;
+            }
+        }
+    </script>
     <script>
         // ฟังก์ชันเปิดหน้าประวัติ
         function openHistory() {
@@ -377,6 +560,46 @@
             console.log('   Token:', token ? `✓ พบ (${token.substring(0, 20)}...)` : '✗ ไม่พบ');
             console.log('   User ID:', user_id ? `✓ พบ (${user_id})` : '✗ ไม่พบ');
             
+            // Quick Supabase fallback: try to read from Supabase if client configured
+            try {
+                const sup = getSupabaseClient();
+                if (sup && user_id) {
+                    console.log('📡 Supabase: fetching user/profile directly');
+                    try {
+                        const { data: userRow, error: userErr } = await sup
+                            .from('users')
+                            .select('*')
+                            .eq('id', user_id)
+                            .single();
+                        if (!userErr && userRow) {
+                            console.log('   ✓ Supabase user:', userRow);
+                            // latest bmi record
+                            const { data: records, error: recErr } = await sup
+                                .from('bmi_records')
+                                .select('*')
+                                .eq('user_id', user_id)
+                                .order('created_at', { ascending: false })
+                                .limit(1);
+                            if (!recErr && Array.isArray(records) && records.length > 0) {
+                                const rec = records[0];
+                                userRow.weight = userRow.weight ?? rec.weight;
+                                userRow.height = userRow.height ?? rec.height;
+                                userRow.bmi = userRow.bmi ?? rec.bmi;
+                                userRow.calories = userRow.calories ?? rec.calories;
+                            }
+                            localStorage.setItem('userData', JSON.stringify(userRow));
+                            displayUserData(userRow);
+                            // We got what we need
+                            return;
+                        }
+                    } catch (e) {
+                        console.warn('   ⚠ Supabase fetch failed:', e.message || e);
+                    }
+                }
+            } catch (e) {
+                console.warn('   ⚠ Supabase helper error:', e.message || e);
+            }
+
             try {
                 let success = false;
                 let triedWithToken = false;
@@ -385,8 +608,8 @@
                 if (token) {
                     console.log('📡 Phase 1: ลองใช้ Bearer Token');
                     const tokenEndpoints = [
-                        'http://localhost:3002/api/auth/profile',
-                        'http://localhost:3002/api/auth/me'
+                        'https://heath-check-436133641220.asia-southeast1.run.app/api/auth/profile',
+                        'https://heath-check-436133641220.asia-southeast1.run.app/api/auth/me'
                     ];
                     
                     for (const endpoint of tokenEndpoints) {
@@ -448,9 +671,9 @@
                         console.log(`   มีข้อมูล BMI แล้วหรือยัง: ${alreadyHasBmiData ? '✓ มี' : '✗ ยังไม่มี'}`);
                         
                         const userIdEndpoints = [
-                            `http://localhost:3002/api/data/bmi_records`,
-                            `http://localhost:3002/api/users/profile?user_id=${user_id}`,
-                            `http://localhost:3002/api/auth/profile?user_id=${user_id}`
+                            `https://heath-check-436133641220.asia-southeast1.run.app/api/data/bmi_records`,
+                            `https://heath-check-436133641220.asia-southeast1.run.app/api/users/profile?user_id=${user_id}`,
+                            `https://heath-check-436133641220.asia-southeast1.run.app/api/auth/profile?user_id=${user_id}`
                         ];
                         
                         // สร้าง headers ใหม่โดยไม่ใส่ Authorization (เพราะใช้ user_id แทน)
@@ -530,7 +753,7 @@
                                             try {
                                                 console.log('   📡 กำลังดึงข้อมูล user (username, email) จาก API...');
                                                 const userProfileResponse = await fetch(
-                                                    `http://localhost:3002/api/auth/profile?user_id=${user_id}`,
+                                                    `https://heath-check-436133641220.asia-southeast1.run.app/api/auth/profile?user_id=${user_id}`,
                                                     {
                                                         method: 'GET',
                                                         headers: {
@@ -664,10 +887,10 @@
                     console.log('📡 Phase 3: ลอง endpoint ธรรมดา (อาจจะใช้ cookies)');
                     console.warn('   ⚠ Phase 3 อาจจะไม่ทำงานเพราะไม่มี authentication');
                     const fallbackEndpoints = [
-                        'http://localhost:3002/api/auth/profile',
-                        'http://localhost:3002/api/users/profile', // ✅ ใช้ /api/users/profile (มี 's')
-                        'http://localhost:3002/api/auth/me',
-                        'http://localhost:3002/api/auth/user'
+                        'https://heath-check-436133641220.asia-southeast1.run.app/api/auth/profile',
+                        'https://heath-check-436133641220.asia-southeast1.run.app/api/users/profile', // ✅ ใช้ /api/users/profile (มี 's')
+                        'https://heath-check-436133641220.asia-southeast1.run.app/api/auth/me',
+                        'https://heath-check-436133641220.asia-southeast1.run.app/api/auth/user'
                         // ⚠️ ไม่เรียก /api/auth/signin เพราะมันเป็น POST method
                     ];
                     
@@ -704,7 +927,7 @@
                 if (!success) {
                     console.warn('⚠ ไม่สามารถดึงข้อมูลจาก API ได้ หรือไม่มีข้อมูล BMI');
                     console.warn('   💡 ตรวจสอบว่า:');
-                    console.warn('      1. Backend server รันอยู่ที่ http://localhost:3002');
+                    console.warn('      1. Backend server รันอยู่ที่ https://heath-check-436133641220.asia-southeast1.run.app');
                     console.warn('      2. API endpoint ถูกต้อง');
                     console.warn('      3. Token หรือ user_id ถูกต้อง');
                     
@@ -720,9 +943,9 @@
                                 // จาก availableRoutes: GET /api/data/:tableName
                                 // ลองดึงข้อมูลจาก bmi_records table โดยตรง
                                 const bmiEndpoints = [
-                                    `http://localhost:3002/api/data/bmi_records`,
-                                    `http://localhost:3002/api/users/profile?user_id=${user_id}`,
-                                    `http://localhost:3002/api/auth/profile?user_id=${user_id}`
+                                    `https://heath-check-436133641220.asia-southeast1.run.app/api/data/bmi_records`,
+                                    `https://heath-check-436133641220.asia-southeast1.run.app/api/users/profile?user_id=${user_id}`,
+                                    `https://heath-check-436133641220.asia-southeast1.run.app/api/auth/profile?user_id=${user_id}`
                                 ];
                                 
                                 console.log('   💡 หมายเหตุ: API /api/data/bmi_records อาจจะต้องใช้ query parameter หรือ filter');
@@ -830,7 +1053,7 @@
                                                     try {
                                                         console.log('   📡 กำลังดึงข้อมูล user (username, email) จาก API...');
                                                         const userProfileResponse = await fetch(
-                                                            `http://localhost:3002/api/auth/profile?user_id=${user_id}`,
+                                                            `https://heath-check-436133641220.asia-southeast1.run.app/api/auth/profile?user_id=${user_id}`,
                                                             {
                                                                 method: 'GET',
                                                                 headers: {
@@ -1040,6 +1263,262 @@
             document.getElementById('bmiValue').textContent = '-';
             document.getElementById('caloriesValue').textContent = '-';
         }
+
+        // ฟังก์ชันแสดงข้อความแจ้งเตือนด้านบนการ์ด
+        function showProfileMessage(message, type = 'success') {
+            const box = document.getElementById('profileMessage');
+            if (!box) return;
+            box.textContent = message;
+            box.className = `profile-message ${type}`;
+            box.style.display = 'block';
+            // ซ่อนอัตโนมัติหลัง 3 วินาที
+            setTimeout(() => {
+                box.style.display = 'none';
+            }, 3000);
+        }
+
+        // ฟังก์ชันโหลด avatar จาก localStorage
+        function loadAvatarFromStorage() {
+            const avatarImage = document.getElementById('avatarImage');
+            const savedAvatar = localStorage.getItem('userAvatar');
+            if (avatarImage && savedAvatar) {
+                avatarImage.src = savedAvatar;
+                avatarImage.style.display = 'block';
+            }
+        }
+
+        // ฟังก์ชันตั้งค่า UI ของหน้าโปรไฟล์
+        function initProfileUI() {
+            // avatar
+            const changeAvatarBtn = document.getElementById('changeAvatarBtn');
+            const avatarInput = document.getElementById('avatarInput');
+            const avatarImage = document.getElementById('avatarImage');
+
+            if (changeAvatarBtn && avatarInput) {
+                changeAvatarBtn.addEventListener('click', () => {
+                    avatarInput.click();
+                });
+
+                avatarInput.addEventListener('change', (e) => {
+                    const file = e.target.files && e.target.files[0];
+                    if (!file) return;
+                    if (!file.type.startsWith('image/')) {
+                        showProfileMessage('กรุณาเลือกรูปภาพเท่านั้น', 'error');
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                        const dataUrl = evt.target.result;
+                        if (avatarImage) {
+                            avatarImage.src = dataUrl;
+                            avatarImage.style.display = 'block';
+                        }
+                        localStorage.setItem('userAvatar', dataUrl);
+                        showProfileMessage('อัปเดตรูปโปรไฟล์เรียบร้อย', 'success');
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            // toggle ส่วนแก้ไข BMI
+            const toggleBmiBtn = document.getElementById('toggleBmiEditBtn');
+            const bmiSection = document.getElementById('bmiEditSection');
+            const cancelBmiBtn = document.getElementById('cancelBmiBtn');
+            const saveBmiBtn = document.getElementById('saveBmiBtn');
+
+            if (toggleBmiBtn && bmiSection) {
+                toggleBmiBtn.addEventListener('click', () => {
+                    const isVisible = bmiSection.style.display === 'block';
+                    bmiSection.style.display = isVisible ? 'none' : 'block';
+                });
+            }
+            if (cancelBmiBtn && bmiSection) {
+                cancelBmiBtn.addEventListener('click', () => {
+                    bmiSection.style.display = 'none';
+                });
+            }
+            if (saveBmiBtn) {
+                saveBmiBtn.addEventListener('click', () => {
+                    const weightInput = document.getElementById('editWeight');
+                    const heightInput = document.getElementById('editHeight');
+                    const weight = parseFloat(weightInput.value);
+                    const height = parseFloat(heightInput.value);
+
+                    if ((weightInput.value && (isNaN(weight) || weight <= 0)) ||
+                        (heightInput.value && (isNaN(height) || height <= 0))) {
+                        showProfileMessage('กรุณากรอกค่าน้ำหนักและส่วนสูงให้ถูกต้อง', 'error');
+                        return;
+                    }
+
+                    if (isNaN(weight) || isNaN(height) || weight <= 0 || height <= 0) {
+                        showProfileMessage('กรุณากรอกค่าน้ำหนักและส่วนสูงให้ถูกต้อง', 'error');
+                        return;
+                    }
+
+                    // คำนวณ BMI และแคลอรี่แบบเดียวกับหน้า Sign up
+                    const heightInMeters = height / 100;
+                    const bmi = weight / (heightInMeters * heightInMeters);
+                    const calories = (10 * weight) + (6.25 * height) - 125;
+                    const bmiRounded = parseFloat(bmi.toFixed(2));
+                    const caloriesRounded = Math.round(calories);
+
+                    // อ่าน userData เดิมจาก localStorage
+                    const savedUser = localStorage.getItem('userData');
+                    let userData = savedUser ? JSON.parse(savedUser) : {};
+
+                    userData.weight = weight;
+                    userData.height = height;
+                    userData.bmi = bmiRounded;
+                    userData.calories = caloriesRounded;
+
+                    // บันทึกลง Supabase ผ่าน API
+                    (async () => {
+                        try {
+                            const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+                            const rawUserId = localStorage.getItem('userId') || localStorage.getItem('user_id');
+
+                            if (!rawUserId) {
+                                console.warn('⚠ ไม่พบ userId ใน localStorage ขณะบันทึก BMI');
+                            }
+
+                            // แปลง user_id ให้เหมาะสมกับ backend (เหมือนใน cart.js)
+                            let userIdForAPI = rawUserId;
+                            if (rawUserId) {
+                                const isUUID = rawUserId.includes('-') || rawUserId.length > 10;
+                                userIdForAPI = isUUID ? rawUserId : parseInt(rawUserId);
+                            }
+
+                            const apiBase = 'https://heath-check-436133641220.asia-southeast1.run.app';
+                            const headers = {
+                                'Content-Type': 'application/json',
+                            };
+                            if (token) {
+                                headers['Authorization'] = `Bearer ${token}`;
+                            }
+
+                            const body = {
+                                user_id: userIdForAPI,
+                                weight: weight,
+                                height: height,
+                                bmi: bmiRounded,
+                                calories: caloriesRounded
+                            };
+
+                            const resp = await fetch(`${apiBase}/api/data/bmi_records`, {
+                                method: 'POST',
+                                headers,
+                                body: JSON.stringify(body)
+                            });
+
+                            if (!resp.ok) {
+                                const text = await resp.text();
+                                console.error('❌ บันทึก BMI ไปยัง API ไม่สำเร็จ:', resp.status, text);
+                                showProfileMessage('บันทึกข้อมูล BMI ไปยังเซิร์ฟเวอร์ไม่สำเร็จ แต่บันทึกในเครื่องแล้ว', 'error');
+                            } else {
+                                console.log('✅ บันทึก BMI ไปยัง API สำเร็จ');
+                                showProfileMessage('บันทึกข้อมูล BMI และแคลอรี่เรียบร้อย', 'success');
+                                // Also try to write to Supabase directly (if configured)
+                                try {
+                                    const sup = getSupabaseClient();
+                                    if (sup && userIdForAPI) {
+                                        const insertObj = {
+                                            user_id: userIdForAPI,
+                                            weight: weight,
+                                            height: height,
+                                            bmi: bmiRounded,
+                                            calories: caloriesRounded
+                                        };
+                                        const { data: inserted, error: insertErr } = await sup.from('bmi_records').insert([insertObj]);
+                                        if (insertErr) {
+                                            console.warn('⚠ Supabase insert error:', insertErr);
+                                        } else {
+                                            console.log('✓ บันทึก BMI ลง Supabase สำเร็จ:', inserted);
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.warn('⚠ Supabase write failed:', e.message || e);
+                                }
+                            }
+                        } catch (err) {
+                            console.error('❌ Error ขณะบันทึก BMI ไปยัง Supabase:', err);
+                            showProfileMessage('เกิดข้อผิดพลาดระหว่างเชื่อมต่อเซิร์ฟเวอร์ แต่บันทึกในเครื่องแล้ว', 'error');
+                        }
+                    })();
+
+                    // บันทึกลง localStorage และอัปเดต UI ทันที
+                    localStorage.setItem('userData', JSON.stringify(userData));
+                    displayUserData(userData);
+                    if (bmiSection) bmiSection.style.display = 'none';
+                });
+            }
+
+            // toggle ส่วนเปลี่ยนรหัสผ่าน
+            const togglePwdBtn = document.getElementById('togglePasswordEditBtn');
+            const pwdSection = document.getElementById('passwordEditSection');
+            const cancelPwdBtn = document.getElementById('cancelPasswordBtn');
+            const savePwdBtn = document.getElementById('savePasswordBtn');
+
+            if (togglePwdBtn && pwdSection) {
+                togglePwdBtn.addEventListener('click', () => {
+                    const isVisible = pwdSection.style.display === 'block';
+                    pwdSection.style.display = isVisible ? 'none' : 'block';
+                });
+            }
+            if (cancelPwdBtn && pwdSection) {
+                cancelPwdBtn.addEventListener('click', () => {
+                    pwdSection.style.display = 'none';
+                });
+            }
+            if (savePwdBtn) {
+                savePwdBtn.addEventListener('click', () => {
+                    const currentPwd = document.getElementById('currentPassword').value;
+                    const newPwd = document.getElementById('newPassword').value;
+                    const confirmPwd = document.getElementById('confirmNewPassword').value;
+
+                    if (!newPwd || newPwd.length < 6) {
+                        showProfileMessage('รหัสผ่านใหม่ต้องยาวอย่างน้อย 6 ตัวอักษร', 'error');
+                        return;
+                    }
+                    if (newPwd !== confirmPwd) {
+                        showProfileMessage('รหัสผ่านใหม่และการยืนยันไม่ตรงกัน', 'error');
+                        return;
+                    }
+
+                    // ในเวอร์ชันนี้จะอัปเดตรหัสผ่านเฉพาะใน localStorage
+                    const savedUser = localStorage.getItem('userData');
+                    let userData = savedUser ? JSON.parse(savedUser) : {};
+                    userData.password = newPwd;
+                    localStorage.setItem('userData', JSON.stringify(userData));
+                    displayUserData(userData);
+                    showProfileMessage('เปลี่ยนรหัสผ่านเรียบร้อย (เก็บในเครื่อง)', 'success');
+
+                    // Also attempt to update password in Supabase users table if configured
+                    (async () => {
+                        try {
+                            const rawUserId = localStorage.getItem('userId') || localStorage.getItem('user_id');
+                            let userIdForAPI = rawUserId;
+                            if (rawUserId) {
+                                const isUUID = rawUserId.includes('-') || rawUserId.length > 10;
+                                userIdForAPI = isUUID ? rawUserId : parseInt(rawUserId);
+                            }
+                            const sup = getSupabaseClient();
+                            if (sup && userIdForAPI) {
+                                const { data, error } = await sup.from('users').update({ password: newPwd }).eq('id', userIdForAPI);
+                                if (error) console.warn('⚠ Supabase update password error:', error);
+                                else console.log('✓ Updated password in Supabase users table:', data);
+                            }
+                        } catch (e) {
+                            console.warn('⚠ Supabase password update failed:', e.message || e);
+                        }
+                    })();
+
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmNewPassword').value = '';
+                    if (pwdSection) pwdSection.style.display = 'none';
+                });
+            }
+        }
         
         // ฟังก์ชันทดสอบ API (สำหรับ debug)
         async function testBMIAPI() {
@@ -1056,10 +1535,10 @@
             }
             
             const testEndpoints = [
-                `http://localhost:3002/api/data/bmi_records?user_id=${userId}`,
-                `http://localhost:3002/api/data/bmi_records`,
-                `http://localhost:3002/api/auth/profile?user_id=${userId}`,
-                `http://localhost:3002/api/users/profile?user_id=${userId}`
+                `https://heath-check-436133641220.asia-southeast1.run.app/api/data/bmi_records?user_id=${userId}`,
+                `https://heath-check-436133641220.asia-southeast1.run.app/api/data/bmi_records`,
+                `https://heath-check-436133641220.asia-southeast1.run.app/api/auth/profile?user_id=${userId}`,
+                `https://heath-check-436133641220.asia-southeast1.run.app/api/users/profile?user_id=${userId}`
             ];
             
             for (const endpoint of testEndpoints) {
@@ -1107,7 +1586,21 @@
         // อัปเดต badge และดึงข้อมูลผู้ใช้เมื่อโหลดหน้า
         window.addEventListener('DOMContentLoaded', () => {
             updateCartBadge();
+            loadAvatarFromStorage();
             fetchUserData();
+            initProfileUI();
+            // One-time Supabase config check
+            try {
+                const sup = getSupabaseClient();
+                if (!sup) {
+                    console.warn('Supabase client not configured. Set values in supabase-config.js or localStorage.');
+                    showProfileMessage('Supabase ยังไม่ได้ตั้งค่า — remote sync จะไม่ทำงาน', 'error');
+                } else {
+                    console.log('Supabase client initialized');
+                }
+            } catch (e) {
+                console.warn('Error checking Supabase config:', e.message || e);
+            }
             
             // ทดสอบ API หลังจาก 2 วินาที (ให้ fetchUserData ทำงานก่อน)
             setTimeout(() => {

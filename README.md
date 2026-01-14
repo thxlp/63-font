@@ -85,6 +85,28 @@ Project_63_font/
 - ระบบนี้ใช้ Backend API ที่ `http://localhost:3002` สำหรับการทำงานบางส่วน
 - สำหรับการใช้งานจริง ควรเปลี่ยน API endpoint เป็น production URL
 
+## Supabase (optional)
+
+To enable direct Supabase read/write from the profile page, provide your Supabase project URL and anon key.
+
+1. Open `supabase-config.js` in the project root and set:
+
+```js
+window.__SUPABASE_URL__ = 'https://<your-project>.supabase.co';
+window.__SUPABASE_KEY__ = '<your-anon-key>'; // use anon key for client use
+```
+
+2. Or set them in browser localStorage (for testing):
+
+```js
+localStorage.setItem('SUPABASE_URL','https://<your-project>.supabase.co');
+localStorage.setItem('SUPABASE_KEY','<your-anon-key>');
+```
+
+3. Reload the profile page. The page will attempt to read from Supabase `users` and `bmi_records` tables and also insert/update BMI and password when you save.
+
+Security: Never expose a `service_role` key in client-side code or committed files. Use the anon/public key and enforce RLS policies on Supabase.
+
 ## License
 
 MIT License
